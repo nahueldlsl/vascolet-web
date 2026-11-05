@@ -64,13 +64,17 @@ Este proyecto es una **reconstrucción de código abierto en la web**, desarroll
 
 <div align="center">
 
-| Selección de Nivel | Prehistoria |
+| Selección de Nivel | 🦖 Prehistoria |
 |:---:|:---:|
-| <img src="docs/screenshots/level_select.png" width="420" /> | <img src="docs/screenshots/gameplay_prehistory.png" width="420" /> |
+| <img src="docs/screenshots/level_select.png" width="420" alt="Selector de Nivel" /> | <img src="docs/screenshots/gameplay_prehistory.png" width="420" alt="Prehistoria" /> |
 
-| Egipto Antiguo | El Futuro |
+| 🏛️ Egipto Antiguo | ⚔️ Castillo Medieval |
 |:---:|:---:|
-| <img src="docs/screenshots/gameplay_egypt.png" width="420" /> | <img src="docs/screenshots/gameplay_future.png" width="420" /> |
+| <img src="docs/screenshots/gameplay_egypt.png" width="420" alt="Egipto Antiguo" /> | <img src="docs/screenshots/gameplay_castle.png" width="420" alt="Castillo Medieval" /> |
+
+| 🏴‍☠️ Mundo Pirata | 🚀 El Futuro |
+|:---:|:---:|
+| <img src="docs/screenshots/gameplay_pirates.png" width="420" alt="Mundo Pirata" /> | <img src="docs/screenshots/gameplay_future.png" width="420" alt="El Futuro" /> |
 
 </div>
 
