@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Vascolet: La Máquina del Tiempo - Port Web</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0d0f12;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    #game-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      background-color: #000;
+    }
+    /* Controls Bar & Info (hidden for 100% original PC screen fidelity) */
+    #controls-bar {
+      display: none;
+    }
+    #controls-bar span kbd {
+      background: #333;
+      color: #f1c40f;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #555;
+    }
+    /* Mobile Touch Overlay */
+    #touch-overlay {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    @media (pointer: coarse) {
+      #touch-overlay {
+        display: block;
+      }
+      #controls-bar {
+        display: none;
+      }
+    }
+    .touch-btn {
+      position: absolute;
+      pointer-events: auto;
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: bold;
+      font-size: 20px;
+      touch-action: none;
+    }
+    .touch-btn:active {
+      background: rgba(243, 156, 18, 0.5);
+      border-color: #f1c40f;
+    }
+    /* D-PAD */
+    #btn-left {
+      bottom: 40px;
+      left: 20px;
+    }
+    #btn-right {
+      bottom: 40px;
+      left: 100px;
+    }
+    #btn-up {
+      bottom: 110px;
+      left: 60px;
+    }
+    #btn-down {
+      bottom: 20px;
+      left: 60px;
+      display: none;
+    }
+    /* Action buttons */
+    #btn-jump {
+      bottom: 40px;
+      right: 30px;
+      width: 75px;
+      height: 75px;
+      font-size: 16px;
+      background: rgba(231, 76, 60, 0.3);
+      border-color: #e74c3c;
+    }
+    #btn-action {
+      bottom: 125px;
+      right: 40px;
+      width: 60px;
+      height: 60px;
+      font-size: 14px;
+      background: rgba(52, 152, 219, 0.3);
+      border-color: #3498db;
+    }
+    #btn-pause {
+      top: 15px;
+      right: 15px;
+      width: 45px;
+      height: 45px;
+      font-size: 14px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas" width="1200" height="900"></canvas>
+    <div id="controls-bar">
+      <span><kbd>←</kbd><kbd>→</kbd> Mover</span>
+      <span><kbd>↑</kbd> Subir / Leer</span>
+      <span><kbd>Espacio</kbd> Saltar</span>
+      <span><kbd>M</kbd> Silenciar</span>
+      <span><kbd>F</kbd> Pantalla Completa</span>
+      <span><kbd>Esc</kbd> Pausa</span>
+    </div>
+
+    <!-- On-screen mobile controls -->
+    <div id="touch-overlay">
+      <div id="btn-left" class="touch-btn">◀</div>
+      <div id="btn-right" class="touch-btn">▶</div>
+      <div id="btn-up" class="touch-btn">▲</div>
+      <div id="btn-down" class="touch-btn">▼</div>
+      <div id="btn-jump" class="touch-btn">SALTO</div>
+      <div id="btn-action" class="touch-btn">LEER</div>
+      <div id="btn-pause" class="touch-btn">⏸</div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

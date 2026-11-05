@@ -1,0 +1,42 @@
+{
+  "name": "vascolet-web",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Port web fiel en HTML5 Canvas y TypeScript de 'Vascolet: La Máquina del Tiempo' (Batoví Games / Nestlé, 2010), recreado con paridad binaria 1:1.",
+  "type": "module",
+  "homepage": "https://nahueldlsl.github.io/vascolet-web",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nahueldlsl/vascolet-web.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nahueldlsl/vascolet-web/issues"
+  },
+  "keywords": [
+    "vascolet",
+    "batovi-games",
+    "uruguay",
+    "plan-ceibal",
+    "retro-game",
+    "game-engine",
+    "html5-canvas",
+    "typescript",
+    "vite",
+    "reverse-engineering"
+  ],
+  "author": "Nahuel de los Santos <nahueldelossanto@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vite": "^5.2.0",
+    "vitest": "^2.1.9"
+  }
+}

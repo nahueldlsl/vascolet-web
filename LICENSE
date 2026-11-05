@@ -1,0 +1,29 @@
+MIT License
+
+Copyright (c) 2024-2026 Nahuel de los Santos
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+### Aviso Legal y Reconocimiento de Propiedad Intelectual
+
+1. **Titularidad Original**: "Vascolet: La Máquina del Tiempo" fue concebido y desarrollado originalmente en 2010 por **Batoví Games Studio** y licenciado / patrocinado por **Nestlé Uruguay S.A.** para su distribución como videojuego promocional en computadoras personales y laptops del **Plan Ceibal** (laptops XO / Magallanes).
+2. **Propósito Educativo y de Preservación**: Este proyecto es una reconstrucción independiente y sin fines de lucro desarrollada mediante ingeniería inversa y análisis de software. Su único fin es el estudio académico de motores de videojuegos clásicos en la web, la educación en tecnologías abiertas (TypeScript / HTML5 Canvas) y la preservación digital del patrimonio cultural de los videojuegos uruguayos.
+3. **Marcas Registradas**: "Vascolet", las marcas comerciales de Nestlé, los nombres de personajes, música, diseños gráficos y el universo conceptual asociado pertenecen exclusivamente a sus respectivos titulares. La licencia MIT descrita anteriormente aplica únicamente al código fuente y a la implementación del motor desarrollada en este repositorio.

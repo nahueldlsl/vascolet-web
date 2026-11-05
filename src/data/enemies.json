@@ -1,0 +1,406 @@
+{
+  "DINOSAUR_SMALL": {
+    "image": "/assets/images/enemies/enemies_tile.png",
+    "startX": 0,
+    "startY": 510,
+    "frameW": 90,
+    "frameH": 82,
+    "cols": 11,
+    "count": 11,
+    "speed": 180
+  },
+  "DINOSAUR_BIG": {
+    "image": "/assets/images/enemies/enemies_tile.png",
+    "startX": 0,
+    "startY": 230,
+    "frameW": 130,
+    "frameH": 140,
+    "cols": 7,
+    "count": 11,
+    "speed": 150
+  },
+  "PTERODACTILE": {
+    "image": "/assets/images/enemies/enemies_tile.png",
+    "startX": 0,
+    "startY": 0,
+    "frameW": 110,
+    "frameH": 140,
+    "cols": 5,
+    "count": 5,
+    "speed": 180
+  },
+  "ENEMY_DEATH": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 360,
+    "startY": 820,
+    "frameW": 160,
+    "frameH": 150,
+    "cols": 4,
+    "count": 4,
+    "speed": 0
+  },
+  "HEDGEHOG": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 550,
+    "startY": 330,
+    "frameW": 80,
+    "frameH": 60,
+    "cols": 2,
+    "count": 2,
+    "speed": 0
+  },
+  "SNAKE": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 550,
+    "startY": 0,
+    "frameW": 60,
+    "frameH": 100,
+    "cols": 4,
+    "count": 4,
+    "speed": 0
+  },
+  "STATIC_SNAKE": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 420,
+    "startY": 670,
+    "frameW": 60,
+    "frameH": 80,
+    "cols": 2,
+    "count": 2,
+    "speed": 0
+  },
+  "ESCORPION_R": {
+    "image": "/assets/images/enemies/enemies_tile.png",
+    "startX": 0,
+    "startY": 140,
+    "frameW": 100,
+    "frameH": 90,
+    "cols": 7,
+    "count": 7,
+    "speed": 120
+  },
+  "MUMMY": {
+    "image": "/assets/images/enemies/enemies_tile.png",
+    "startX": 0,
+    "startY": 840,
+    "frameW": 110,
+    "frameH": 170,
+    "cols": 6,
+    "count": 6,
+    "speed": 100
+  },
+  "TEMPLARY": {
+    "image": "/assets/images/enemies/enemies_tile.png",
+    "startX": 0,
+    "startY": 600,
+    "frameW": 120,
+    "frameH": 240,
+    "cols": 3,
+    "count": 3,
+    "speed": 120
+  },
+  "PIRATE": {
+    "image": "/assets/images/enemies/enemies_tile.png",
+    "startX": 360,
+    "startY": 660,
+    "frameW": 100,
+    "frameH": 180,
+    "cols": 3,
+    "count": 3,
+    "speed": 120
+  },
+  "BIRD_BROWN": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 0,
+    "startY": 0,
+    "frameW": 110,
+    "frameH": 130,
+    "cols": 5,
+    "count": 5,
+    "speed": 160
+  },
+  "BIRD_YELLOW": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 0,
+    "startY": 130,
+    "frameW": 110,
+    "frameH": 130,
+    "cols": 5,
+    "count": 5,
+    "speed": 160
+  },
+  "BIRD_BLACK": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 0,
+    "startY": 260,
+    "frameW": 110,
+    "frameH": 130,
+    "cols": 5,
+    "count": 5,
+    "speed": 160
+  },
+  "BIRD_ROBOT": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 320,
+    "startY": 480,
+    "frameW": 110,
+    "frameH": 100,
+    "cols": 3,
+    "count": 3,
+    "speed": 160
+  },
+  "SNAKE_ROBOT": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 0,
+    "startY": 480,
+    "frameW": 80,
+    "frameH": 100,
+    "cols": 4,
+    "count": 4,
+    "speed": 120
+  },
+  "MOUSE_ROBOT": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 650,
+    "startY": 530,
+    "frameW": 80,
+    "frameH": 50,
+    "cols": 3,
+    "count": 3,
+    "speed": 140
+  },
+  "BIG_ROBOT": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 0,
+    "startY": 580,
+    "frameW": 140,
+    "frameH": 180,
+    "cols": 3,
+    "count": 3,
+    "speed": 110
+  },
+  "RAT": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 0,
+    "startY": 820,
+    "frameW": 120,
+    "frameH": 65,
+    "cols": 3,
+    "count": 3,
+    "speed": 180
+  },
+  "STALACTITE": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 660,
+    "startY": 760,
+    "frameW": 60,
+    "frameH": 60,
+    "cols": 1,
+    "count": 1,
+    "speed": 0
+  },
+  "COCONUT": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 720,
+    "startY": 760,
+    "frameW": 60,
+    "frameH": 60,
+    "cols": 1,
+    "count": 1,
+    "speed": 0
+  },
+  "METEORITE": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 780,
+    "startY": 760,
+    "frameW": 60,
+    "frameH": 60,
+    "cols": 1,
+    "count": 1,
+    "speed": 0
+  },
+  "PIRANHA_R": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 660,
+    "startY": 580,
+    "frameW": 80,
+    "frameH": 80,
+    "cols": 4,
+    "count": 4,
+    "anchorX": 40,
+    "anchorY": 75,
+    "speed": 0
+  },
+  "PIRANHA_G": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 660,
+    "startY": 660,
+    "frameW": 80,
+    "frameH": 80,
+    "cols": 4,
+    "count": 4,
+    "anchorX": 40,
+    "anchorY": 80,
+    "speed": 0
+  },
+  "FIRE": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 550,
+    "startY": 0,
+    "frameW": 80,
+    "frameH": 80,
+    "cols": 4,
+    "count": 4,
+    "speed": 0
+  },
+  "FIRE_R": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 360,
+    "startY": 760,
+    "frameW": 60,
+    "frameH": 60,
+    "cols": 2,
+    "count": 2,
+    "speed": 0
+  },
+  "FIRE_Y": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 240,
+    "startY": 760,
+    "frameW": 60,
+    "frameH": 60,
+    "cols": 2,
+    "count": 2,
+    "speed": 0
+  },
+  "FIRE_G": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 480,
+    "startY": 760,
+    "frameW": 60,
+    "frameH": 60,
+    "cols": 2,
+    "count": 2,
+    "speed": 0
+  },
+  "CANNON_EGYPT": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 0,
+    "startY": 390,
+    "frameW": 80,
+    "frameH": 90,
+    "cols": 3,
+    "count": 3,
+    "speed": 0
+  },
+  "CANNON_CASTLE": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 240,
+    "startY": 390,
+    "frameW": 80,
+    "frameH": 90,
+    "cols": 3,
+    "count": 3,
+    "speed": 0
+  },
+  "CANNON_PREHISTORY": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 480,
+    "startY": 390,
+    "frameW": 80,
+    "frameH": 90,
+    "cols": 3,
+    "count": 3,
+    "speed": 0
+  },
+  "CANNON_PIRATES": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 720,
+    "startY": 390,
+    "frameW": 80,
+    "frameH": 90,
+    "cols": 3,
+    "count": 3,
+    "speed": 0
+  },
+  "CANNON_LASER": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 420,
+    "startY": 580,
+    "frameW": 80,
+    "frameH": 90,
+    "cols": 3,
+    "count": 3,
+    "speed": 0
+  },
+  "CANNONBALL_EGYPT": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 120,
+    "startY": 760,
+    "frameW": 60,
+    "frameH": 60,
+    "cols": 1,
+    "count": 1,
+    "speed": 350
+  },
+  "CANNONBALL_CASTLE": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 180,
+    "startY": 760,
+    "frameW": 60,
+    "frameH": 60,
+    "cols": 1,
+    "count": 1,
+    "speed": 350
+  },
+  "CANNONBALL_PREHISTORY": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 600,
+    "startY": 760,
+    "frameW": 60,
+    "frameH": 60,
+    "cols": 1,
+    "count": 1,
+    "speed": 350
+  },
+  "CANNONBALL_FUTURE": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 60,
+    "startY": 760,
+    "frameW": 60,
+    "frameH": 60,
+    "cols": 1,
+    "count": 1,
+    "speed": 350
+  },
+  "CANNONBALL_PIRATES": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 0,
+    "startY": 760,
+    "frameW": 60,
+    "frameH": 60,
+    "cols": 1,
+    "count": 1,
+    "speed": 350
+  },
+  "ROCK": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 840,
+    "startY": 760,
+    "frameW": 60,
+    "frameH": 60,
+    "cols": 1,
+    "count": 1,
+    "speed": 0
+  },
+  "GUILLOTINE": {
+    "image": "/assets/images/enemies/enemies_tile_2.png",
+    "startX": 790,
+    "startY": 0,
+    "frameW": 76,
+    "frameH": 300,
+    "cols": 1,
+    "count": 1,
+    "speed": 0
+  }
+}

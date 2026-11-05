@@ -1,0 +1,16 @@
+# Auto-detect text files and normalize line endings to LF
+* text=auto eol=lf
+
+# Force binary for game assets and media
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.ogg binary
+*.mp3 binary
+*.wav binary
+
+# Map data
+*.tmx text eol=lf
+*.json text eol=lf
