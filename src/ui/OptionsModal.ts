@@ -203,6 +203,42 @@ export class OptionsModal {
       if (this.stretchScreen) {
         ctx.drawImage(opcionesImg, 303, 62, 33, 30, dx + 221, dy + 417, 33, 30);
       }
+
+      // Highlight indicator for keyboard/d-pad focused option row (0 to 3)
+      if (this.selectedRow >= 0 && this.selectedRow <= 3) {
+        const hx = dx + 18;
+        let hy = 0;
+        const hw = this.dialogW - 36;
+        let hh = 0;
+
+        if (this.selectedRow === 0) {
+          hy = dy + 188;
+          hh = 86;
+        } else if (this.selectedRow === 1) {
+          hy = dy + 280;
+          hh = 86;
+        } else if (this.selectedRow === 2) {
+          hy = dy + 368;
+          hh = 42;
+        } else if (this.selectedRow === 3) {
+          hy = dy + 412;
+          hh = 42;
+        }
+
+        ctx.save();
+        ctx.strokeStyle = '#f1c40f';
+        ctx.lineWidth = 2.5;
+        ctx.fillStyle = 'rgba(241, 196, 15, 0.12)';
+        ctx.beginPath();
+        if (typeof (ctx as any).roundRect === 'function') {
+          (ctx as any).roundRect(hx, hy, hw, hh, 8);
+        } else {
+          ctx.rect(hx, hy, hw, hh);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
     }
 
     // 8. "Volver" Button at (dx + 50, dy + 472, 180, 46)

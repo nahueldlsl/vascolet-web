@@ -3,7 +3,7 @@
 # 🍫 Vascolet: La Máquina del Tiempo (Web Port)
 
 [![CI](https://github.com/nahueldlsl/vascolet-web/actions/workflows/ci.yml/badge.svg)](https://github.com/nahueldlsl/vascolet-web/actions/workflows/ci.yml)
-[![Vitest](https://img.shields.io/badge/Vitest-30%2F30%20passed-22c55e?logo=vitest&logoColor=white)](https://github.com/nahueldlsl/vascolet-web/actions)
+[![Vitest](https://img.shields.io/badge/Vitest-33%2F33%20passed-22c55e?logo=vitest&logoColor=white)](https://github.com/nahueldlsl/vascolet-web/actions)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.2-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Live Demo](https://img.shields.io/badge/Demo-Jugar%20Ahora-f59e0b?logo=googlechrome&logoColor=white)](https://nahueldlsl.github.io/vascolet-web/)
@@ -56,7 +56,7 @@ Este proyecto es una **reconstrucción de código abierto en la web**, desarroll
 - 🔊 **Audio y Música Originales**:
   - Banda sonora completa y efectos de sonido originales en formato OGG.
   - Desbloqueo y gestión de audio conforme a las políticas de reproducción automática modernas.
-- 🧪 **Suite de Pruebas de Regresión**: 30 pruebas unitarias en **Vitest** que validan la matemática de los enemigos, proyectiles, saltarines y carga de niveles.
+- 🧪 **Suite de Pruebas de Regresión**: 33 pruebas unitarias en **Vitest** que validan la matemática de los enemigos, proyectiles, saltarines, puntaje acumulativo y carga de niveles.
 
 ---
 

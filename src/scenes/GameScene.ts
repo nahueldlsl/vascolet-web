@@ -130,9 +130,8 @@ export class GameScene {
     // Parse Entities
     this.parseObjects();
 
-    // Preserve score & lives from previous level
-    this.player.score = initialScore;
-    this.player.lives = initialLives;
+    // Preserve score & lives from previous level and synchronize next extra life threshold
+    this.player.setScoreAndLives(initialScore, initialLives);
 
     // Settle ground enemies onto their floor tiles immediately
     for (const enemy of this.enemies) {
@@ -428,7 +427,11 @@ export class GameScene {
 
     for (const sign of this.signs) {
       if (sign.isPlayerNear(this.player)) {
-        activeSignText = sign.text;
+        if (input.isUp() || (this.dialogueBox.visible && this.dialogueBox.text === sign.text)) {
+          activeSignText = sign.text;
+        } else if (!activeSignText) {
+          activeSignText = 'Pulsa ↑ para leer el cartel';
+        }
         break;
       }
     }

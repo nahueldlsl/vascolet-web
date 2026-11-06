@@ -135,10 +135,10 @@ export class LevelSelectScene {
       return { action: 'back_to_menu' };
     }
 
-    // Check each of the 5 era card slots
+    // Check each of the 5 era card slots (including lower year plaque and coin counter)
     for (let i = 0; i < this.levels.length; i++) {
       const lvl = this.levels[i];
-      if (x >= lvl.cardX && x <= lvl.cardX + 213 && y >= lvl.cardY && y <= lvl.cardY + 534) {
+      if (x >= lvl.cardX && x <= lvl.cardX + 213 && y >= lvl.cardY && y <= lvl.cardY + 620) {
         this.selectedIndex = i;
         audio.playSound('/assets/audio/fx/powerup.ogg', 0.8);
         return { action: 'play_level', levelId: lvl.id };
@@ -151,7 +151,7 @@ export class LevelSelectScene {
   public handleMouseMove(x: number, y: number) {
     for (let i = 0; i < this.levels.length; i++) {
       const lvl = this.levels[i];
-      if (x >= lvl.cardX && x <= lvl.cardX + 213 && y >= lvl.cardY && y <= lvl.cardY + 534) {
+      if (x >= lvl.cardX && x <= lvl.cardX + 213 && y >= lvl.cardY && y <= lvl.cardY + 620) {
         if (this.selectedIndex !== i) {
           this.selectedIndex = i;
           audio.playSound('/assets/audio/fx/item.ogg', 0.25);

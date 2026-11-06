@@ -168,8 +168,15 @@ describe('Parity Bug Fixes Verification', () => {
 
       player.update(0.016, mockInput as any, dummyMap);
 
-      // Player must lose life and respawn at checkpoint
+      // Player must lose life and be in dead state
       expect(player.lives).toBe(initialLives - 1);
+      expect(player.state).toBe('dead');
+
+      // Advancing timer past 1.8s restores player at checkpoint in idle state
+      player.update(1.9, mockInput as any, dummyMap);
+      expect(player.state).toBe('idle');
+      expect(player.x).toBe(100);
+      expect(player.isInvulnerable).toBe(true);
     });
   });
 

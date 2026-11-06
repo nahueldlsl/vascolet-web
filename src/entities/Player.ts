@@ -348,10 +348,6 @@ export class Player {
     // Hazard collision & abyss fall check
     if (this.y > map.height * map.tileHeight) {
       this.die();
-      // If falling out of the world abyss, immediately restore player at checkpoint coordinates
-      // so camera never follows falling corpse into empty bottom void
-      this.x = Math.max(this.minPlayableX, this.checkpointX);
-      this.y = this.checkpointY;
     } else if (!this.isInvulnerable && CollisionSystem.checkHazardCollision(map, this.getBox())) {
       this.die();
     }
@@ -451,7 +447,21 @@ export class Player {
     this.x = Math.max(this.minPlayableX, this.x);
     this.deathTimer = 0;
     this.lives--;
-    audio.playSound('/assets/audio/fx/death_2.ogg', 0.9);
+    // Authentic Vascolet.exe dual death FX sequence (0x0043399e & 0x00432acf)
+    audio.playSound('/assets/audio/fx/death_1.ogg', 0.9);
+    setTimeout(() => {
+      audio.playSound('/assets/audio/fx/death_2.ogg', 0.9);
+    }, 450);
+  }
+
+  public setScoreAndLives(score: number, lives: number) {
+    this.score = score;
+    this.lives = lives;
+    this.nextExtraLifeScore = Math.floor(Math.max(0, this.score) / 2000) * 2000 + 2000;
+  }
+
+  public getNextExtraLifeScore(): number {
+    return this.nextExtraLifeScore;
   }
 
   public addScore(points: number) {
