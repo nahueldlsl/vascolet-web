@@ -1,16 +1,18 @@
 import { audio } from '../core/AudioManager';
 import { InputManager } from '../core/Input';
+import { GameStorage } from '../core/Storage';
 
 export class OptionsModal {
   public isOpen: boolean = false;
   public selectedRow: number = 0; // 0: Music, 1: Effects, 2: Fullscreen, 3: Stretch, 4: Volver
-  public stretchScreen: boolean = false;
+  public stretchScreen: boolean = GameStorage.loadOptions().stretchScreen;
 
   // Dialog placement on 1200x900 canvas (native 280x614 region from opciones_tile.png)
   private readonly dialogW = 280;
   private readonly dialogH = 614;
 
   public open() {
+    this.stretchScreen = GameStorage.loadOptions().stretchScreen;
     this.isOpen = true;
     this.selectedRow = 4;
   }
@@ -137,15 +139,8 @@ export class OptionsModal {
 
   private toggleStretch() {
     this.stretchScreen = !this.stretchScreen;
-    const canvas = document.getElementById('game-canvas') as HTMLCanvasElement | null;
-    if (canvas) {
-      if (this.stretchScreen) {
-        canvas.style.width = `${window.innerWidth}px`;
-        canvas.style.height = `${window.innerHeight}px`;
-      } else {
-        window.dispatchEvent(new Event('resize'));
-      }
-    }
+    GameStorage.saveOptions({ stretchScreen: this.stretchScreen });
+    window.dispatchEvent(new Event('resize'));
   }
 
   public render(

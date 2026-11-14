@@ -13,15 +13,17 @@ export class CollectibleItem {
   public height: number = 40;
   public type: string;
   public assetName: string;
+  public count: number = 1;
   public collected: boolean = false;
   private animTimer: number = 0;
   private floatOffset: number = 0;
 
-  constructor(type: string, assetName: string, x: number, y: number, w: number, h: number) {
+  constructor(type: string, assetName: string, x: number, y: number, w: number, h: number, count: number = 1) {
     this.type = type;
     this.assetName = assetName;
     this.x = x;
     this.y = y;
+    this.count = Math.max(1, count);
 
     let spriteKey = this.assetName;
     if (this.assetName === 'POINTS') spriteKey = 'COIN';
@@ -48,7 +50,7 @@ export class CollectibleItem {
     onLevelComplete?: () => void,
     spawnEffect?: (eff: VisualEffect) => void
   ) {
-    if (this.collected) return;
+    if (this.collected || player.state === 'dead' || player.state === 'victory') return;
 
     // Item float interpolator from Vascolet.exe (0x00441ae0 & 0x00441c70):
     // Ping-pong mode 2, easeOutCubic, delta = -7.0 px, duration = 1.5s
@@ -69,28 +71,32 @@ export class CollectibleItem {
       }
 
       if (this.assetName === 'COIN' || this.assetName === 'POINTS') {
-        player.collectCoin();
+        // In TMX maps, COIN items have pRequiredItem="POINTS" and pCount="100" (score value, 1 coin).
+        const points = this.count > 1 ? this.count : 100;
+        player.collectCoin(points);
       } else if (this.assetName === 'LIVES') {
-        player.collectLife();
+        player.collectLife(this.count);
       } else if (this.assetName.includes('KEY')) {
-        player.collectKey(this.assetName);
+        for (let i = 0; i < this.count; i++) {
+          player.collectKey(this.assetName);
+        }
       } else if (this.assetName === 'MICROWAVE') {
         if (!player.hasMicrowave) {
           player.collectMicrowave();
           if (onLevelComplete) {
-            setTimeout(() => onLevelComplete(), 1000);
+            onLevelComplete();
           }
         }
       } else if (this.assetName === 'VASCOLETS') {
-        player.vascoletCups = Math.min(4, player.vascoletCups + 1);
-        player.addScore(500);
+        player.vascoletCups = Math.min(4, player.vascoletCups + this.count);
+        player.addScore(500 * this.count);
         audio.playSound('/assets/audio/fx/powerup.ogg', 0.85);
       } else if (this.assetName === 'CEREALS') {
-        player.cerealBowls = Math.min(4, player.cerealBowls + 1);
-        player.addScore(250);
+        player.cerealBowls = Math.min(4, player.cerealBowls + this.count);
+        player.addScore(250 * this.count);
         audio.playSound('/assets/audio/fx/powerup.ogg', 0.85);
       } else {
-        player.addScore(250);
+        player.addScore(250 * this.count);
         audio.playSound('/assets/audio/fx/powerup.ogg', 0.85);
       }
     }
@@ -129,12 +135,22 @@ export class Door {
   public height: number = 304;
   public assetName: string;
   public requiredItem: string;
+  public requiredCount: number = 1;
   public opened: boolean = false;
   private openProgress: number = 0; // 0 to 1
 
-  constructor(assetName: string, requiredItem: string, x: number, y: number, w: number, h: number) {
+  constructor(
+    assetName: string,
+    requiredItem: string,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    requiredCount: number = 1
+  ) {
     this.assetName = assetName;
     this.requiredItem = requiredItem;
+    this.requiredCount = Math.max(1, requiredCount);
     this.x = x;
     this.y = y;
     this.width = w > 0 ? w : 76;
@@ -167,29 +183,58 @@ export class Door {
     };
 
     if (CollisionSystem.checkAABB(triggerBox, player.getBox())) {
-      if (!this.requiredItem || player.keys.has(this.requiredItem)) {
+      const heldCount = this.requiredItem
+        ? Math.max(player.keyCounts[this.requiredItem] || 0, player.keys.has(this.requiredItem) ? 1 : 0)
+        : this.requiredCount;
+      if (!this.requiredItem || heldCount >= this.requiredCount) {
         if (this.requiredItem) {
-          player.useKey(this.requiredItem);
+          for (let i = 0; i < this.requiredCount; i++) {
+            player.useKey(this.requiredItem);
+          }
         }
         this.opened = true;
         audio.playSound('/assets/audio/fx/door.ogg', 0.9);
       }
     }
 
-    // If not open, act as solid barrier to player
+    // If not open, act as solid barrier to player (2D minimum-penetration resolution)
     if (!this.opened) {
       const doorBox = this.getBox();
       const pBox = player.getBox();
       if (CollisionSystem.checkAABB(doorBox, pBox)) {
-        const playerCenterX = pBox.x + pBox.w / 2;
-        const doorCenterX = doorBox.x + doorBox.w / 2;
-        const boxOffsetLeft = pBox.x - player.x;
-        if (playerCenterX < doorCenterX) {
-          player.x = doorBox.x - boxOffsetLeft - pBox.w;
-          if (player.vx > 0) player.vx = 0;
+        const overlapLeft = pBox.x + pBox.w - doorBox.x;
+        const overlapRight = doorBox.x + doorBox.w - pBox.x;
+        const overlapTop = pBox.y + pBox.h - doorBox.y;
+        const overlapBottom = doorBox.y + doorBox.h - pBox.y;
+        const minOverlapX = Math.min(overlapLeft, overlapRight);
+        const minOverlapY = Math.min(overlapTop, overlapBottom);
+
+        if (minOverlapX < minOverlapY) {
+          const playerCenterX = pBox.x + pBox.w / 2;
+          const doorCenterX = doorBox.x + doorBox.w / 2;
+          const boxOffsetLeft = pBox.x - player.x;
+          if (playerCenterX < doorCenterX) {
+            player.x = doorBox.x - boxOffsetLeft - pBox.w;
+            if (player.vx > 0) player.vx = 0;
+          } else {
+            player.x = doorBox.x + doorBox.w - boxOffsetLeft;
+            if (player.vx < 0) player.vx = 0;
+          }
         } else {
-          player.x = doorBox.x + doorBox.w - boxOffsetLeft;
-          if (player.vx < 0) player.vx = 0;
+          const playerCenterY = pBox.y + pBox.h / 2;
+          const doorCenterY = doorBox.y + doorBox.h / 2;
+          const boxOffsetTop = pBox.y - player.y;
+          if (playerCenterY < doorCenterY) {
+            player.y = doorBox.y - boxOffsetTop - pBox.h;
+            if (player.vy >= 0) {
+              player.vy = 0;
+              player.onGround = true;
+              player.jumpCount = 0;
+            }
+          } else {
+            player.y = doorBox.y + doorBox.h - boxOffsetTop;
+            if (player.vy < 0) player.vy = 0;
+          }
         }
       }
     }
@@ -458,13 +503,16 @@ export class SavePoint {
     return CollisionSystem.checkAABB(triggerBox, player.getBox());
   }
 
-  public update(player: Player) {
+  public update(player: Player): boolean {
+    if (player.state === 'dead' || player.state === 'victory') return false;
     if (!this.activated && this.isPlayerNear(player)) {
       this.activated = true;
       player.checkpointX = this.x;
       player.checkpointY = this.y - 40;
       audio.playSound('/assets/audio/fx/powerup.ogg', 0.5);
+      return true;
     }
+    return false;
   }
 
   public render(ctx: CanvasRenderingContext2D, signsImg: HTMLImageElement) {
@@ -516,13 +564,13 @@ export class SignPost {
   }
 
   public isPlayerNear(player: Player): boolean {
-    const triggerBox: Box = {
-      x: this.x - 40,
-      y: this.y - 80,
-      w: this.width + 80,
-      h: this.height + 100,
+    const hitbox: Box = {
+      x: this.x,
+      y: this.y,
+      w: this.width,
+      h: this.height,
     };
-    return CollisionSystem.checkAABB(triggerBox, player.getBox());
+    return CollisionSystem.checkAABB(hitbox, player.getBox());
   }
 
   public render(ctx: CanvasRenderingContext2D, signsImg: HTMLImageElement) {

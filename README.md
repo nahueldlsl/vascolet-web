@@ -3,7 +3,7 @@
 # 🍫 Vascolet: La Máquina del Tiempo (Web Port)
 
 [![CI](https://github.com/nahueldlsl/vascolet-web/actions/workflows/ci.yml/badge.svg)](https://github.com/nahueldlsl/vascolet-web/actions/workflows/ci.yml)
-[![Vitest](https://img.shields.io/badge/Vitest-33%2F33%20passed-22c55e?logo=vitest&logoColor=white)](https://github.com/nahueldlsl/vascolet-web/actions)
+[![Vitest](https://img.shields.io/badge/Vitest-54%2F54%20passed-22c55e?logo=vitest&logoColor=white)](https://github.com/nahueldlsl/vascolet-web/actions)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.2-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Live Demo](https://img.shields.io/badge/Demo-Jugar%20Ahora-f59e0b?logo=googlechrome&logoColor=white)](https://nahueldlsl.github.io/vascolet-web/)
@@ -56,7 +56,7 @@ Este proyecto es una **reconstrucción de código abierto en la web**, desarroll
 - 🔊 **Audio y Música Originales**:
   - Banda sonora completa y efectos de sonido originales en formato OGG.
   - Desbloqueo y gestión de audio conforme a las políticas de reproducción automática modernas.
-- 🧪 **Suite de Pruebas de Regresión**: 33 pruebas unitarias en **Vitest** que validan la matemática de los enemigos, proyectiles, saltarines, puntaje acumulativo y carga de niveles.
+- 🧪 **Suite de Pruebas de Regresión**: 54 pruebas unitarias y de paridad en **Vitest** que validan la matemática de los enemigos, proyectiles, saltarines, puntaje acumulativo, persistencia, controles y carga de niveles.
 
 ---
 
@@ -157,7 +157,8 @@ vascolet-web/
 │   │   ├── Camera.ts
 │   │   ├── Collision.ts
 │   │   ├── Input.ts
-│   │   └── ParityFormulas.ts      # Fórmulas reversadas del ejecutable x86
+│   │   ├── ParityFormulas.ts      # Fórmulas reversadas del ejecutable x86
+│   │   └── Storage.ts             # Persistencia local de progreso y opciones
 │   ├── data/                      # Metadatos JSON de sprites y enemigos
 │   ├── entities/                  # Entidades interactivas (Player, Enemy, Item)
 │   ├── scenes/                    # Escenas de juego, menú, selector y cinemáticas
@@ -165,7 +166,7 @@ vascolet-web/
 │   ├── main.ts                    # Punto de entrada y loop principal
 │   └── types.ts                   # Interfaces y tipos del motor
 ├── tests/
-│   └── parity/                    # 30 pruebas automatizadas con Vitest
+│   └── parity/                    # 54 pruebas automatizadas con Vitest
 ├── index.html                     # Contenedor HTML5 y overlay táctil
 ├── package.json                   # Configuración del paquete y scripts
 ├── tsconfig.json                  # Configuración de TypeScript

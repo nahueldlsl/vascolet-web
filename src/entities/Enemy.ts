@@ -179,44 +179,45 @@ export class Enemy {
   }
 
   public getBox(): Box {
-    // Exact collision hitboxes reverse-engineered from Vascolet.exe
+    // Exact collision hitboxes reverse-engineered from Vascolet.exe (0x00419180 table)
     const name = this.animName.toUpperCase();
-    if (name === 'HEDGEHOG') {
-      const bw = 46;
-      const bh = 36;
-      return {
-        x: this.x + (this.width - bw) / 2,
-        y: this.y + (this.height - bh),
-        w: bw,
-        h: bh,
-      };
-    }
-    if (name === 'DINOSAUR_BIG') {
-      const bw = 50;
-      const bh = 70;
-      return {
-        x: this.x + (this.width - bw) / 2,
-        y: this.y + (this.height - bh),
-        w: bw,
-        h: bh,
-      };
-    }
-    if (name === 'DINOSAUR_SMALL') {
-      const bw = 34;
-      const bh = 50;
-      return {
-        x: this.x + (this.width - bw) / 2,
-        y: this.y + (this.height - bh),
-        w: bw,
-        h: bh,
-      };
-    }
+
     if (name === 'PTERODACTILE') {
       const bw = 54;
       const bh = 26;
       return {
         x: this.x + (this.width - bw) / 2,
         y: this.y + 45,
+        w: bw,
+        h: bh,
+      };
+    }
+    if (name === 'BIRD_BROWN' || name === 'BIRD_BLACK') {
+      const bw = 75;
+      const bh = 40;
+      return {
+        x: this.x + (this.width - bw) / 2,
+        y: this.y + 45,
+        w: bw,
+        h: bh,
+      };
+    }
+    if (name === 'BIRD_YELLOW') {
+      const bw = 62;
+      const bh = 20;
+      return {
+        x: this.x + (this.width - bw) / 2,
+        y: this.y + 40,
+        w: bw,
+        h: bh,
+      };
+    }
+    if (name === 'BIRD_ROBOT') {
+      const bw = 66;
+      const bh = 75;
+      return {
+        x: this.x + (this.width - bw) / 2,
+        y: this.y + 17,
         w: bw,
         h: bh,
       };
@@ -231,26 +232,6 @@ export class Enemy {
         h: bh,
       };
     }
-    if (name === 'COCONUT') {
-      const bw = 32;
-      const bh = 32;
-      return {
-        x: this.x + (this.width - bw) / 2,
-        y: this.y + (this.height - bh),
-        w: bw,
-        h: bh,
-      };
-    }
-    if (name === 'ROCK') {
-      const bw = 40;
-      const bh = 40;
-      return {
-        x: this.x + (this.width - bw) / 2,
-        y: this.y + (this.height - bh),
-        w: bw,
-        h: bh,
-      };
-    }
     if (name === 'METEORITE') {
       const bw = 38;
       const bh = 38;
@@ -261,16 +242,24 @@ export class Enemy {
         h: bh,
       };
     }
-    if (name === 'CANNONBALL_PREHISTORY') {
-      const bw = 50;
-      const bh = 32;
+
+    const centeredProjectiles: Record<string, [number, number]> = {
+      CANNONBALL_PIRATES: [32, 32],
+      CANNONBALL_FUTURE: [50, 20],
+      CANNONBALL_EGYPT: [50, 16],
+      CANNONBALL_CASTLE: [35, 32],
+      BIG_CANNONBALL: [36, 36],
+    };
+    if (centeredProjectiles[name]) {
+      const [bw, bh] = centeredProjectiles[name];
       return {
         x: this.x + (this.width - bw) / 2,
-        y: this.y + (this.height - bh),
+        y: this.y + (this.height - bh) / 2,
         w: bw,
         h: bh,
       };
     }
+
     if (name.includes('PIRANHA')) {
       const bw = PIRANHA_SPRITE_SPEC.hitboxW;
       const bh = PIRANHA_SPRITE_SPEC.hitboxH;
@@ -281,9 +270,50 @@ export class Enemy {
         h: bh,
       };
     }
-    if (name === 'MUMMY') {
-      const bw = 40;
-      const bh = 153;
+
+    // Ground-anchored entities from Vascolet.exe 0x00419180 registration table
+    const bottomAlignedHitboxes: Record<string, [number, number]> = {
+      STATIC_SNAKE: [32, 60],
+      SNAKE: [50, 32],
+      HEDGEHOG: [30, 30],
+      ESCORPION_R: [80, 32],
+      RAT: [80, 32],
+      DINOSAUR_BIG: [50, 70],
+      DINOSAUR_SMALL: [34, 50],
+      MUMMY: [35, 130],
+      PIRATE: [40, 100],
+      TEMPLARY: [55, 150],
+      SNAKE_ROBOT: [70, 90],
+      MOUSE_ROBOT: [70, 38],
+      BIG_ROBOT: [100, 158],
+      MINE: [80, 50],
+      COCONUT: [30, 30],
+      ROCK: [40, 39],
+      CANNONBALL_PREHISTORY: [50, 32],
+      GUILLOTINE: [60, 45],
+      FIRE: [32, 40],
+      FIRE_Y: [32, 40],
+      FIRE_R: [32, 40],
+      FIRE_G: [32, 40],
+      CANNON_PREHISTORY: [70, 80],
+      CANNON_EGYPT: [80, 90],
+      CANNON_CASTLE: [80, 90],
+      CANNON_PIRATES: [80, 90],
+      CANNON_LASER: [80, 90],
+      RED_SPLATTER: [76, 152],
+      BLUE_SPLATTER: [76, 152],
+      GREEN_SPLATTER: [76, 152],
+      LAVA_IN: [76, 152],
+      LAVA_OUT: [76, 152],
+      WATER_IN: [76, 152],
+      WATER_OUT: [76, 152],
+      ACID_IN: [76, 152],
+      ACID_OUT: [76, 152],
+      CAVE_TRAP: [76, 304],
+    };
+
+    if (bottomAlignedHitboxes[name]) {
+      const [bw, bh] = bottomAlignedHitboxes[name];
       return {
         x: this.x + (this.width - bw) / 2,
         y: this.y + (this.height - bh),
@@ -292,7 +322,7 @@ export class Enemy {
       };
     }
 
-    // Slightly inset hitbox for fair platformer collisions
+    // Fallback inset hitbox
     const padX = Math.min(10, Math.floor(this.width * 0.12));
     const padY = Math.min(8, Math.floor(this.height * 0.08));
     return {
@@ -304,15 +334,23 @@ export class Enemy {
   }
 
   public canBeStomped(): boolean {
-    const unStompable = [
-      'HEDGEHOG',
+    // In Vascolet.exe, Enemy::onCollide (0x0043e0c0), Bird::onCollide (0x0043e890),
+    // and Jumper::onCollide (0x00440b50) all allow stomping from above (including STATIC_SNAKE and HEDGEHOG).
+    // Only non-stompable hazards (Fire, Guillotine, Piranha, Stalactite, Thrower, Projectiles, Traps) cannot be stomped.
+    const unStompableTypes = ['Projectile', 'Fire', 'Guillotine', 'Piranha', 'Stalactite', 'Thrower'];
+    if (unStompableTypes.includes(this.type)) {
+      return false;
+    }
+    const unStompableAnims = [
       'GUILLOTINE',
       'FIRE',
       'FIRE_R',
-      'STATIC_SNAKE',
+      'FIRE_Y',
+      'FIRE_G',
       'ROCK',
       'COCONUT',
       'METEORITE',
+      'BIG_CANNONBALL',
       'PIRANHA_R',
       'PIRANHA_G',
       'CANNONBALL_PREHISTORY',
@@ -321,8 +359,31 @@ export class Enemy {
       'CANNONBALL_PIRATES',
       'CANNONBALL_FUTURE',
       'STALACTITE',
+      'MINE',
+      'CAVE_TRAP',
+      'RED_SPLATTER',
+      'BLUE_SPLATTER',
+      'GREEN_SPLATTER',
+      'LAVA_IN',
+      'LAVA_OUT',
+      'WATER_IN',
+      'WATER_OUT',
+      'ACID_IN',
+      'ACID_OUT',
+      'CANNON_PREHISTORY',
+      'CANNON_EGYPT',
+      'CANNON_CASTLE',
+      'CANNON_PIRATES',
+      'CANNON_LASER',
     ];
-    return !unStompable.includes(this.animName) && this.type !== 'Projectile';
+    return !unStompableAnims.includes(this.animName.toUpperCase());
+  }
+
+  public settleToFloor(map: TMXMap) {
+    if (!this.collidesFloor) return;
+    for (let step = 0; step < 20; step++) {
+      this.snapToFloor(map, 0.05);
+    }
   }
 
   protected snapToFloor(map: TMXMap, dt: number) {
@@ -416,20 +477,20 @@ export class Enemy {
     const playerBox = player.getBox();
 
     if (CollisionSystem.checkAABB(enemyBox, playerBox)) {
-      // Check if player lands/stomps on the enemy from above
+      // Check if player lands/stomps on the enemy from above (Vascolet.exe 0x0043e0c0 & 0x00440b50)
       const isFalling = player.vy > 0;
-      const playerFeet = player.y + player.height;
-      const enemyHead = this.y + this.height * 0.65;
+      const playerFeet = playerBox.y + playerBox.h;
+      const enemyHead = Math.max(enemyBox.y + 18, enemyBox.y + enemyBox.h * 0.75);
 
-      if (isFalling && playerFeet <= enemyHead && this.canBeStomped()) {
-        // Successful stomp!
+      if (isFalling && (playerFeet <= enemyHead || playerBox.y < enemyBox.y) && this.canBeStomped()) {
+        // Successful stomp! (Vascolet.exe 0x004330f0: bounce vy = -510.0)
         this.active = false;
         player.currentPlatform = null;
-        player.vy = -600; // Bounce up!
+        player.vy = -510; // Bounce up!
         player.jumpCount = 1; // Allow double jump at apex of bounce if player has cereal
         player.onGround = false;
         player.state = 'jump';
-        player.addScore(200);
+        player.addScore(100);
         audio.playSound('/assets/audio/fx/jump.ogg', 0.85);
         if (spawnEffect) {
           spawnEffect(new VisualEffect('enemy_death', this.x + this.width / 2, this.y + this.height / 2));
@@ -776,6 +837,8 @@ export class PiranhaEnemy extends Enemy {
 export class CannonEnemy extends Enemy {
   private shootTimer: number = 0;
   private shootInterval: number = 2.5;
+  private minShootInterval: number = 2.0;
+  private maxShootInterval: number = 2.5;
   private bulletAsset: string = 'CANNONBALL_PREHISTORY';
   private bulletVel: number = -350;
   private xOffset: number = -40;
@@ -784,7 +847,13 @@ export class CannonEnemy extends Enemy {
   constructor(name: string, type: string, x: number, y: number, w: number, h: number, props: Record<string, string>) {
     super(name, type, x, y, w, h, props);
     this.collidesFloor = props.pCollidesFloor === 'true';
-    this.shootInterval = parseFloat(props.pMaxTime || '2.5');
+    const parsedMax = parseFloat(props.pMaxTime || '2.5');
+    const parsedMin = parseFloat(props.pMinTime || props.pMaxTime || '2.5');
+    const safeMax = isNaN(parsedMax) || parsedMax <= 0 ? 2.5 : parsedMax;
+    const safeMin = isNaN(parsedMin) || parsedMin <= 0 ? safeMax : parsedMin;
+    this.minShootInterval = Math.min(safeMin, safeMax);
+    this.maxShootInterval = Math.max(safeMin, safeMax);
+    this.shootInterval = this.pickNextInterval();
     this.bulletAsset = props.pBulletAsset || 'CANNONBALL_PREHISTORY';
     this.config = (enemiesConfig as any)[this.animName] || (enemiesConfig as any)['CANNON_PREHISTORY'];
     this.width = this.config?.frameW || 80;
@@ -803,6 +872,13 @@ export class CannonEnemy extends Enemy {
     this.yOffset = isNaN(rawYOff) ? 15 : (rawYOff < 0 ? (this.height + rawYOff - 30) : rawYOff);
   }
 
+  private pickNextInterval(): number {
+    if (this.maxShootInterval <= this.minShootInterval) {
+      return this.minShootInterval;
+    }
+    return this.minShootInterval + Math.random() * (this.maxShootInterval - this.minShootInterval);
+  }
+
   public update(dt: number, map: TMXMap, player: Player, spawnProjectile?: (p: ProjectileEnemy) => void) {
     this.snapToFloor(map, dt);
 
@@ -816,6 +892,7 @@ export class CannonEnemy extends Enemy {
     this.shootTimer += dt;
     if (this.shootTimer >= this.shootInterval) {
       this.shootTimer = 0;
+      this.shootInterval = this.pickNextInterval();
       if (spawnProjectile) {
         const bullet = new ProjectileEnemy(
           this.bulletAsset,
@@ -827,7 +904,13 @@ export class CannonEnemy extends Enemy {
           { pxVel: `${this.bulletVel}`, pAnim: this.bulletAsset }
         );
         spawnProjectile(bullet);
-        audio.playSound('/assets/audio/fx/cannon.ogg', 0.5);
+        const shotSound =
+          this.animName === 'CANNON_LASER'
+            ? '/assets/audio/fx/laser.ogg'
+            : this.animName === 'CANNON_EGYPT'
+              ? '/assets/audio/fx/statue_shot.ogg'
+              : '/assets/audio/fx/cannon.ogg';
+        audio.playSound(shotSound, 0.5);
       }
     }
 
@@ -853,13 +936,28 @@ export class ProjectileEnemy extends Enemy {
     }
   }
 
-  public update(dt: number, _map: TMXMap, player: Player) {
+  public update(dt: number, map: TMXMap, player: Player) {
     if (!this.active) return;
     this.x += this.vx * dt;
     this.lifetime -= dt;
     if (this.lifetime <= 0) {
       this.active = false;
       return;
+    }
+
+    // Deactivate on solid wall collision so bullets/lasers never pass through walls
+    if (map && map.tiles && map.tileWidth > 0 && map.tileHeight > 0) {
+      const box = this.getBox();
+      const leadX = this.vx >= 0 ? box.x + box.w : box.x;
+      const tx = Math.floor(leadX / map.tileWidth);
+      const topTy = Math.floor((box.y + 4) / map.tileHeight);
+      const bottomTy = Math.floor((box.y + box.h - 4) / map.tileHeight);
+      for (let ty = topTy; ty <= bottomTy; ty++) {
+        if (CollisionSystem.isSolid(map, tx, ty)) {
+          this.active = false;
+          return;
+        }
+      }
     }
 
     if (!player.isInvulnerable && player.state !== 'dead') {
@@ -891,6 +989,7 @@ export class GuillotineEnemy extends Enemy {
   private waitTime: number = 1.7;
   private duration: number = 0.5;
   private dropDelta: number = 100;
+  private wasDropping: boolean = false;
 
   constructor(name: string, type: string, x: number, y: number, w: number, h: number, props: Record<string, string>) {
     super(name, type, x, y, w, h, props);
@@ -909,10 +1008,15 @@ export class GuillotineEnemy extends Enemy {
     const t = this.timer % totalCycle;
 
     if (t < this.duration) {
+      if (!this.wasDropping) {
+        this.wasDropping = true;
+        audio.playSound('/assets/audio/fx/guillotine.ogg', 0.45);
+      }
       const progress = t / this.duration;
       const drop = Math.sin(progress * Math.PI);
       this.y = this.startY + drop * this.dropDelta;
     } else {
+      this.wasDropping = false;
       this.y = this.startY;
     }
 
@@ -1045,5 +1149,158 @@ export class MeteoriteEnemy extends Enemy {
     ctx.rotate(this.rotation);
     ctx.drawImage(img, sx, sy, sw, sh, -sw / 2, -sh / 2, sw, sh);
     ctx.restore();
+  }
+}
+
+// Jumping Snake / Robot Snake Enemy (Vascolet.exe 0x00423885 -> Jumper::Jumper at 0x00440860, vtable 0x4ECDF4)
+export class JumperEnemy extends Enemy {
+  public savedVx: number = 120;
+  public ay: number = 800.0;
+  public onGround: boolean = false;
+  private groundTimer: number = 0;
+
+  constructor(name: string, type: string, x: number, y: number, w: number, h: number, props: Record<string, string>) {
+    super(name, type, x, y, w, h, props);
+    this.animName = props.pAnim || props.pAsset || 'SNAKE';
+    this.config = (enemiesConfig as any)[this.animName] || (enemiesConfig as any)['SNAKE'];
+    this.width = this.config?.frameW || 60;
+    this.height = this.config?.frameH || 100;
+
+    const markerW = w > 0 ? w : this.width;
+    const markerH = h > 0 ? h : this.height;
+    this.x = Math.round(x + markerW / 2 - this.width / 2);
+    this.y = Math.round(y + markerH - this.height);
+    this.startX = this.x;
+    this.startY = this.y;
+
+    const rawVx = parseFloat(props.pxVel || '120');
+    this.savedVx = isNaN(rawVx) || rawVx === 0 ? 120 : rawVx;
+    this.vx = this.savedVx;
+    this.facingRight = this.savedVx > 0;
+
+    const rawAy = parseFloat(props.pyAccel || '800');
+    this.ay = isNaN(rawAy) || rawAy <= 0 ? 800 : rawAy;
+    this.collidesFloor = true;
+  }
+
+  public settleToFloor(map: TMXMap) {
+    if (!this.collidesFloor) return;
+    for (let step = 0; step < 20; step++) {
+      this.snapToFloor(map, 0.05);
+    }
+  }
+
+  protected snapToFloor(map: TMXMap, dt: number) {
+    if (this.onGround) return;
+    super.snapToFloor(map, dt);
+    if (this.vy === 0) {
+      this.onGround = true;
+      this.vx = 0;
+    }
+  }
+
+  public update(
+    dt: number,
+    map: TMXMap,
+    player: Player,
+    _spawnProjectile?: (p: ProjectileEnemy) => void,
+    spawnEffect?: (eff: VisualEffect) => void
+  ) {
+    if (!this.active) return;
+
+    this.frameTimer += dt;
+    if (this.frameTimer > 0.1) {
+      this.frameTimer = 0;
+      const count = this.config?.count || 4;
+      this.currentFrame = (this.currentFrame + 1) % count;
+    }
+
+    if (this.onGround) {
+      this.groundTimer += dt;
+      // After completing ground coil cycle (0x00440a47), leap with vy = -600.0 (0x4EF218)
+      if (this.groundTimer >= 0.4) {
+        this.groundTimer = 0;
+        this.onGround = false;
+        this.vx = this.savedVx;
+        this.vy = -600.0;
+        this.facingRight = this.vx > 0;
+        audio.playSound('/assets/audio/fx/jump.ogg', 0.45);
+      }
+    } else {
+      const tileW = map.tileWidth;
+      const tileH = map.tileHeight;
+
+      // Horizontal movement and wall/ledge reversal (0x00440c70)
+      const dx = this.vx * dt;
+      this.x += dx;
+      this.distanceTraveled += Math.abs(dx);
+
+      const box = this.getBox();
+      const checkX = this.vx > 0 ? box.x + box.w : box.x;
+      const tileX = Math.floor(checkX / tileW);
+      const midTileY = Math.floor((box.y + box.h * 0.5) / tileH);
+      const hitWall = CollisionSystem.isSolid(map, tileX, midTileY);
+      const reachedMaxDist = this.maxDistance > 0 && this.distanceTraveled >= this.maxDistance;
+
+      if (hitWall || reachedMaxDist) {
+        this.x -= dx;
+        this.vx = -this.vx;
+        this.savedVx = this.vx;
+        this.facingRight = this.vx > 0;
+        this.distanceTraveled = 0;
+      }
+
+      // Vertical gravity and ceiling/floor collision (0x00440d70)
+      this.vy = Math.min(800, this.vy + this.ay * dt);
+      this.y += this.vy * dt;
+
+      const updatedBox = this.getBox();
+      const leftTileX = Math.floor((updatedBox.x + 4) / tileW);
+      const rightTileX = Math.floor((updatedBox.x + updatedBox.w - 4) / tileW);
+
+      if (this.vy < 0) {
+        const topTileY = Math.floor(updatedBox.y / tileH);
+        if (
+          CollisionSystem.isSolid(map, leftTileX, topTileY) ||
+          CollisionSystem.isSolid(map, rightTileX, topTileY)
+        ) {
+          const boxTopOffset = updatedBox.y - this.y;
+          this.y = (topTileY + 1) * tileH - boxTopOffset;
+          this.vy = 0;
+        }
+      } else if (this.vy > 0) {
+        const footY = this.y + this.height;
+        const floorTileY = Math.floor(footY / tileH);
+        if (
+          CollisionSystem.isSolid(map, leftTileX, floorTileY) ||
+          CollisionSystem.isPlatform(map, leftTileX, floorTileY) ||
+          CollisionSystem.isSolid(map, rightTileX, floorTileY) ||
+          CollisionSystem.isPlatform(map, rightTileX, floorTileY)
+        ) {
+          this.y = floorTileY * tileH - this.height;
+          this.vy = 0;
+          if (this.vx !== 0) {
+            this.savedVx = this.vx;
+          }
+          this.vx = 0;
+          this.onGround = true;
+          this.groundTimer = 0;
+          this.currentFrame = 0;
+
+          // If landed at the edge of a floor ledge, reverse next jump direction
+          const frontX = this.savedVx > 0 ? updatedBox.x + updatedBox.w + 8 : updatedBox.x - 8;
+          const frontTileX = Math.floor(frontX / tileW);
+          const hasFloorAhead =
+            CollisionSystem.isSolid(map, frontTileX, floorTileY) ||
+            CollisionSystem.isPlatform(map, frontTileX, floorTileY);
+          if (!hasFloorAhead) {
+            this.savedVx = -this.savedVx;
+            this.facingRight = this.savedVx > 0;
+          }
+        }
+      }
+    }
+
+    this.checkPlayerCollision(player, spawnEffect);
   }
 }

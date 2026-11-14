@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Jumper, Door, SignPost, CollectibleItem } from '../../src/entities/Interactive';
-import { BirdEnemy, CannonEnemy } from '../../src/entities/Enemy';
+import { Enemy, BirdEnemy, CannonEnemy, JumperEnemy } from '../../src/entities/Enemy';
 import { Player } from '../../src/entities/Player';
 import { CollisionSystem } from '../../src/core/Collision';
 import { TMXMap, LEVEL_CONFIGS } from '../../src/types';
@@ -119,17 +119,10 @@ describe('Parity Bug Fixes Verification', () => {
       height: 10,
       tileWidth: 40,
       tileHeight: 40,
-      layers: [
-        {
-          name: 'Platforms',
-          width: 10,
-          height: 10,
-          data: new Array(100).fill(0),
-          visible: true,
-          opacity: 1,
-        },
-      ],
-      tilesets: [],
+      tilesetName: 'test',
+      tilesetImageSource: '',
+      tileProps: new Map(),
+      tiles: new Uint32Array(100),
       objects: [],
       properties: {},
     };
@@ -260,6 +253,143 @@ describe('Parity Bug Fixes Verification', () => {
   describe('8. Level Configuration Parity', () => {
     it('pirates level minPlayableX aligns with room 1 at 1216', () => {
       expect(LEVEL_CONFIGS.pirates.minPlayableX).toBe(1216);
+    });
+  });
+
+  describe('9. Camelot (castle.tmx) Snake Jump & Stomp Binary Parity (0x00431074, 0x00419180, 0x0043e0c0)', () => {
+    it('uses exact 50x90 Player hitbox (0x00431074) and 32x60 STATIC_SNAKE hitbox (0x0043b4c2)', () => {
+      const player = new Player(100, 100);
+      player.setSuit('normal');
+      expect(player.getBox()).toEqual({ x: 100, y: 100, w: 50, h: 90 });
+
+      const snake = new Enemy('Snake', 'Enemy', 2064, 3510, 56, 62, {
+        pAnim: 'STATIC_SNAKE',
+        pAsset: 'STATIC_SNAKE',
+        pCollidesFloor: 'true',
+      });
+      const sBox = snake.getBox();
+      expect(sBox.w).toBe(32);
+      expect(sBox.h).toBe(60);
+    });
+
+    it('allows Player with 0 Vascolet cups (vy=-600, vx=250) to cleanly jump over Camelot STATIC_SNAKE without damage', () => {
+      // Flat floor at row 47 (y = 47 * 76 = 3572)
+      const snake = new Enemy('Snake', 'Enemy', 2064, 3510, 56, 62, {
+        pAnim: 'STATIC_SNAKE',
+        pAsset: 'STATIC_SNAKE',
+        pCollidesFloor: 'true',
+        pxVel: '0',
+      });
+      // Snap snake bottom onto floor y = 3572
+      snake.y = 3572 - snake.height;
+
+      const sBox = snake.getBox();
+      // Start jump so apex is centered over snake hitbox center
+      // Time to apex = 600 / 1800 = 1/3 s; horizontal distance to apex = 250 * (1/3) = 83.333 px
+      const snakeCenterX = sBox.x + sBox.w * 0.5;
+      const startCenterX = snakeCenterX - 250 * (600 / 1800);
+
+      const player = new Player(startCenterX - 25, 3572 - 90);
+      player.setSuit('normal');
+      player.vascoletCups = 0;
+      player.vx = 250;
+      player.vy = player.getJumpVelocity(); // -600
+      player.onGround = false;
+      player.state = 'jump';
+
+      const dt = 1 / 120;
+      for (let step = 0; step < 85; step++) {
+        player.x += player.vx * dt;
+        player.vy += 1800 * dt;
+        player.y += player.vy * dt;
+        if (player.y + player.height >= 3572) {
+          player.y = 3572 - player.height;
+          player.vy = 0;
+          player.onGround = true;
+        }
+        // Check collision at every substep
+        const hit = CollisionSystem.checkAABB(snake.getBox(), player.getBox());
+        expect(hit).toBe(false);
+      }
+      expect(player.x).toBeGreaterThan(sBox.x + sBox.w);
+      expect(player.lives).toBe(10);
+    });
+
+    it('allows stomping STATIC_SNAKE and HEDGEHOG from above (Vascolet.exe Enemy::onCollide 0x0043e0c0)', () => {
+      const snake = new Enemy('Snake', 'Enemy', 500, 300, 56, 62, {
+        pAnim: 'STATIC_SNAKE',
+      });
+      expect(snake.canBeStomped()).toBe(true);
+
+      const sBox = snake.getBox();
+      const player = new Player(sBox.x, sBox.y - 80);
+      player.setSuit('normal');
+      player.vy = 200; // falling down onto snake top
+
+      (snake as any).checkPlayerCollision(player);
+      expect(snake.active).toBe(false);
+      expect(player.vy).toBe(-510);
+      expect(player.lives).toBe(10);
+
+      const hedgehog = new Enemy('Hedgehog', 'Enemy', 700, 300, 50, 50, {
+        pAnim: 'HEDGEHOG',
+      });
+      expect(hedgehog.canBeStomped()).toBe(true);
+      expect(hedgehog.getBox().w).toBe(30);
+      expect(hedgehog.getBox().h).toBe(30);
+    });
+  });
+
+  describe('10. JumperEnemy Binary Behavior (Vascolet.exe 0x00440860)', () => {
+    it('uses exact binary hitboxes (SNAKE 50x32, SNAKE_ROBOT 70x90), leaps at vy=-600, and can be stomped', () => {
+      const jumperSnake = new JumperEnemy('Jumper', 'Jumper', 5419, 4874, 56, 59, {
+        pAnim: 'SNAKE',
+        pxVel: '120',
+        pyAccel: '800.0',
+      });
+      expect(jumperSnake.getBox().w).toBe(50);
+      expect(jumperSnake.getBox().h).toBe(32);
+      expect(jumperSnake.canBeStomped()).toBe(true);
+
+      const jumperRobot = new JumperEnemy('Jumper', 'Jumper', 10336, 5168, 76, 152, {
+        pAnim: 'SNAKE_ROBOT',
+        pxVel: '-120',
+        pyAccel: '800.0',
+      });
+      expect(jumperRobot.getBox().w).toBe(70);
+      expect(jumperRobot.getBox().h).toBe(90);
+    });
+  });
+
+  describe('11. CollectibleItem pCount Support (Vascolet.exe 0x00433fb0 / 0x0042db50)', () => {
+    it('awards 1 coin and 100 points (0 extra lives) when collecting a pCount=100 COIN item', () => {
+      const coin = new CollectibleItem('Item', 'COIN', 200, 200, 40, 40, 100);
+      const player = new Player(200, 200);
+      player.setSuit('normal');
+
+      coin.update(0.016, player);
+
+      expect(coin.collected).toBe(true);
+      expect(player.coins).toBe(1);
+      expect(player.score).toBe(100);
+      expect(player.lives).toBe(10);
+    });
+
+    it('does not collect items or grant extra lives while player is dead', () => {
+      const coin = new CollectibleItem('Item', 'COIN', 200, 200, 40, 40, 100);
+      const extraLife = new CollectibleItem('Item', 'LIVES', 200, 200, 40, 40, 1);
+      const player = new Player(200, 200);
+      player.setSuit('normal');
+      player.die(); // lives: 9, state: 'dead'
+
+      coin.update(0.016, player);
+      extraLife.update(0.016, player);
+
+      expect(coin.collected).toBe(false);
+      expect(extraLife.collected).toBe(false);
+      expect(player.coins).toBe(0);
+      expect(player.score).toBe(0);
+      expect(player.lives).toBe(9);
     });
   });
 });

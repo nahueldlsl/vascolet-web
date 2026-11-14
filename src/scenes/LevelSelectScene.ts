@@ -1,6 +1,7 @@
 import { InputManager } from '../core/Input';
 import { audio } from '../core/AudioManager';
-import { GameEra, LEVEL_CONFIGS } from '../types';
+import { GameStorage } from '../core/Storage';
+import { GameEra } from '../types';
 
 interface LevelDef {
   id: GameEra;
@@ -86,6 +87,7 @@ export class LevelSelectScene {
   ];
 
   public selectedIndex: number = 0;
+  public unlockedLevels: number = 1;
   private inputTimer: number = 0;
   public levelCoins: Record<GameEra, number> = {
     prehistory: 0,
@@ -95,28 +97,46 @@ export class LevelSelectScene {
     future: 0,
   };
 
-  public recordCoins(era: GameEra, coins: number) {
-    if (coins > (this.levelCoins[era] || 0)) {
-      this.levelCoins[era] = Math.min(100, coins);
+  constructor() {
+    this.syncFromStorage();
+  }
+
+  public syncFromStorage() {
+    const save = GameStorage.loadSave();
+    this.unlockedLevels = save.unlockedLevels;
+    this.levelCoins = { ...save.levelCoins };
+    if (this.selectedIndex >= this.unlockedLevels) {
+      this.selectedIndex = Math.max(0, this.unlockedLevels - 1);
     }
   }
 
+  public isLevelUnlocked(index: number): boolean {
+    return index >= 0 && index < this.unlockedLevels;
+  }
+
+  public recordCoins(era: GameEra, coins: number) {
+    const save = GameStorage.recordLevelCoins(era, coins);
+    this.levelCoins[era] = save.levelCoins[era];
+  }
+
   public onEnter() {
+    this.syncFromStorage();
     audio.playMusic('/assets/audio/music/andy.ogg', true);
   }
 
   public update(dt: number, input: InputManager): { action: string; levelId?: GameEra } | null {
     this.inputTimer += dt;
+    const selectableCount = Math.max(1, Math.min(this.levels.length, this.unlockedLevels));
 
     if (input.isLeftJustPressed()) {
-      this.selectedIndex = (this.selectedIndex - 1 + this.levels.length) % this.levels.length;
+      this.selectedIndex = (this.selectedIndex - 1 + selectableCount) % selectableCount;
       audio.playSound('/assets/audio/fx/item.ogg', 0.4);
     } else if (input.isRightJustPressed()) {
-      this.selectedIndex = (this.selectedIndex + 1) % this.levels.length;
+      this.selectedIndex = (this.selectedIndex + 1) % selectableCount;
       audio.playSound('/assets/audio/fx/item.ogg', 0.4);
     }
 
-    if (input.isSelectJustPressed()) {
+    if (input.isSelectJustPressed() && this.isLevelUnlocked(this.selectedIndex)) {
       audio.playSound('/assets/audio/fx/powerup.ogg', 0.8);
       return { action: 'play_level', levelId: this.levels[this.selectedIndex].id };
     }
@@ -135,10 +155,13 @@ export class LevelSelectScene {
       return { action: 'back_to_menu' };
     }
 
-    // Check each of the 5 era card slots (including lower year plaque and coin counter)
+    // Check each of the 5 era card slots (only unlocked eras can be entered)
     for (let i = 0; i < this.levels.length; i++) {
       const lvl = this.levels[i];
       if (x >= lvl.cardX && x <= lvl.cardX + 213 && y >= lvl.cardY && y <= lvl.cardY + 620) {
+        if (!this.isLevelUnlocked(i)) {
+          return null;
+        }
         this.selectedIndex = i;
         audio.playSound('/assets/audio/fx/powerup.ogg', 0.8);
         return { action: 'play_level', levelId: lvl.id };
@@ -152,7 +175,7 @@ export class LevelSelectScene {
     for (let i = 0; i < this.levels.length; i++) {
       const lvl = this.levels[i];
       if (x >= lvl.cardX && x <= lvl.cardX + 213 && y >= lvl.cardY && y <= lvl.cardY + 620) {
-        if (this.selectedIndex !== i) {
+        if (this.isLevelUnlocked(i) && this.selectedIndex !== i) {
           this.selectedIndex = i;
           audio.playSound('/assets/audio/fx/item.ogg', 0.25);
         }
@@ -208,13 +231,20 @@ export class LevelSelectScene {
 
     // 3. Render 5 Era Cards matching background artwork + "0 / 100" coin counters
     this.levels.forEach((lvl, i) => {
-      const isSelected = i === this.selectedIndex;
+      const unlocked = this.isLevelUnlocked(i);
+      const isSelected = unlocked && i === this.selectedIndex;
       const btnImg = levelButtonImages[lvl.imgButtonKey];
 
       if (!btnImg) return;
 
       ctx.save();
-      if (isSelected) {
+      if (!unlocked) {
+        // Dim locked era cards so progressive unlocking is visually clear
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.52)';
+        ctx.beginPath();
+        ctx.roundRect(lvl.cardX, lvl.cardY, 213, 534, 12);
+        ctx.fill();
+      } else if (isSelected) {
         // Draw active glowing card frame: (223, 3, 213, 534) at (cardX, cardY)
         ctx.drawImage(btnImg, 223, 3, 213, 534, lvl.cardX, lvl.cardY, 213, 534);
 

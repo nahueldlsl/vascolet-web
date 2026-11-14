@@ -1,6 +1,7 @@
 import { assets } from './core/AssetLoader';
 import { audio } from './core/AudioManager';
 import { InputManager } from './core/Input';
+import { GameStorage, ERA_ORDER } from './core/Storage';
 import { GameEra } from './types';
 import { MenuScene } from './scenes/MenuScene';
 import { LevelSelectScene } from './scenes/LevelSelectScene';
@@ -209,12 +210,18 @@ class GameApp {
   }
 
   private resizeCanvas() {
-    // Keep 4:3 aspect ratio (1200x900 native OLPC XO-1 resolution)
+    // Keep 4:3 aspect ratio (1200x900 native OLPC XO-1 resolution), unless stretch option is active
     const container = document.getElementById('game-container');
     if (!container) return;
 
     const winW = window.innerWidth;
     const winH = window.innerHeight;
+    if (GameStorage.loadOptions().stretchScreen) {
+      this.canvas.style.width = `${Math.floor(winW)}px`;
+      this.canvas.style.height = `${Math.floor(winH)}px`;
+      return;
+    }
+
     const targetRatio = 1200 / 900;
 
     let w = winW;
@@ -230,7 +237,16 @@ class GameApp {
   }
 
   private handleSceneAction(action: string) {
-    if (action === 'start_game') {
+    if (action === 'play') {
+      const save = GameStorage.loadSave();
+      if (!save.storySeen) {
+        GameStorage.markStorySeen();
+        this.handleSceneAction('story');
+      } else {
+        this.state = 'LEVEL_SELECT';
+        this.levelSelectScene.onEnter();
+      }
+    } else if (action === 'start_game') {
       this.showLevelIntro('prehistory', 0, 10);
     } else if (action === 'enter_loaded_level') {
       this.startLevel(this.currentEra, this.pendingScore, this.pendingLives);
@@ -302,10 +318,11 @@ class GameApp {
           this.cutsceneScene.setup(['/assets/lang/images/intros/perdiste.jpg'], 'menu');
           this.state = 'GAME_OVER';
         } else if (result === 'level_completed') {
-          const eras: GameEra[] = ['prehistory', 'egypt', 'castle', 'pirates', 'future'];
-          const currentIndex = eras.indexOf(this.currentEra);
-          if (currentIndex < eras.length - 1) {
-            const nextEra = eras[currentIndex + 1];
+          GameStorage.unlockNextLevel(this.currentEra);
+          this.levelSelectScene.syncFromStorage();
+          const currentIndex = ERA_ORDER.indexOf(this.currentEra);
+          if (currentIndex >= 0 && currentIndex < ERA_ORDER.length - 1) {
+            const nextEra = ERA_ORDER[currentIndex + 1];
             this.showLevelIntro(nextEra, this.gameScene.player.score, this.gameScene.player.lives);
           } else {
             this.cutsceneScene.setup(['/assets/lang/images/intros/fin.jpg'], 'menu');

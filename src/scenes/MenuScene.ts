@@ -5,7 +5,7 @@ import { OptionsModal } from '../ui/OptionsModal';
 export class MenuScene {
   private selectedIndex: number = 0;
   private options: { label: string; action: string }[] = [
-    { label: 'Jugar', action: 'level_select' },
+    { label: 'Jugar', action: 'play' },
     { label: 'Opciones', action: 'options' },
     { label: 'Ayuda', action: 'help' },
     { label: 'Créditos', action: 'credits' },

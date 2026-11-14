@@ -36,6 +36,8 @@ export class CutsceneScene {
   }
 
   public handleClick(): string | null {
+    if (this.debounceTimer > 0) return null;
+    audio.playSound('/assets/audio/fx/item.ogg', 0.5);
     this.currentSlideIndex++;
     if (this.currentSlideIndex >= this.slides.length) {
       return this.onCompleteAction;

@@ -116,6 +116,9 @@ export class InputManager {
   }
 
   public isAnyKeyJustPressed(): boolean {
-    return this.keysJustPressed.size > 0 || Object.values(this.virtualButtons).some((v) => v);
+    const vJust = Object.keys(this.virtualButtons).some(
+      (k) => this.virtualButtons[k] && !this.prevVirtualButtons[k]
+    );
+    return this.keysJustPressed.size > 0 || vJust;
   }
 }

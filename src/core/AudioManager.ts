@@ -1,4 +1,5 @@
 import { resolveAssetUrl } from './AssetLoader';
+import { GameStorage } from './Storage';
 
 export class AudioManager {
   private currentMusic: HTMLAudioElement | null = null;
@@ -12,6 +13,12 @@ export class AudioManager {
   private userInteracted: boolean = false;
 
   constructor() {
+    const saved = GameStorage.loadOptions();
+    this.musicVolume = saved.musicVolume;
+    this.sfxVolume = saved.sfxVolume;
+    this.musicMuted = saved.musicMuted;
+    this.sfxMuted = saved.sfxMuted;
+
     if (typeof window !== 'undefined') {
       const unlock = () => {
         this.userInteracted = true;
@@ -95,6 +102,7 @@ export class AudioManager {
     if (this.currentMusic) {
       this.currentMusic.volume = this.isMuted || this.musicMuted ? 0 : this.musicVolume;
     }
+    GameStorage.saveOptions({ musicMuted: this.musicMuted });
     return this.musicMuted;
   }
 
@@ -104,6 +112,7 @@ export class AudioManager {
 
   public toggleSfxMute(): boolean {
     this.sfxMuted = !this.sfxMuted;
+    GameStorage.saveOptions({ sfxMuted: this.sfxMuted });
     return this.sfxMuted;
   }
 
@@ -117,6 +126,7 @@ export class AudioManager {
     if (this.currentMusic) {
       this.currentMusic.volume = this.isMuted || this.musicMuted ? 0 : this.musicVolume;
     }
+    GameStorage.saveOptions({ musicVolume: this.musicVolume, musicMuted: this.musicMuted });
   }
 
   public getMusicVolume(): number {
@@ -126,6 +136,7 @@ export class AudioManager {
   public setSfxVolume(v: number) {
     this.sfxVolume = Math.max(0, Math.min(1, v));
     this.sfxMuted = this.sfxVolume === 0;
+    GameStorage.saveOptions({ sfxVolume: this.sfxVolume, sfxMuted: this.sfxMuted });
   }
 
   public getSfxVolume(): number {

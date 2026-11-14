@@ -4,7 +4,7 @@ import { InputManager } from '../core/Input';
 import { audio } from '../core/AudioManager';
 import spritesData from '../data/sprites.json';
 
-export type PlayerState = 'idle' | 'walk' | 'jump' | 'fall' | 'climb' | 'hurt' | 'dead' | 'getup';
+export type PlayerState = 'idle' | 'walk' | 'jump' | 'fall' | 'climb' | 'hurt' | 'dead' | 'getup' | 'victory';
 export type PlayerSuit = 'normal' | 'dino' | 'skate';
 
 export class Player {
@@ -13,9 +13,9 @@ export class Player {
   public vx: number = 0;
   public vy: number = 0;
 
-  // Collision box
-  public width: number = 62;
-  public height: number = 104;
+  // Collision box (exact from Vascolet.exe at 0x00431074: 50.0 x 90.0)
+  public width: number = 50;
+  public height: number = 90;
 
   public state: PlayerState = 'idle';
   public suit: PlayerSuit = 'normal';
@@ -43,8 +43,9 @@ export class Player {
   public checkpointY: number = 0;
   public minPlayableX: number = 0;
 
-  // Jump tracking for double jump
+  // Jump tracking for double jump & vertical jump air accel
   public jumpCount: number = 0;
+  private verticalJump: boolean = false;
 
   // Animation
   private frameTimer: number = 0;
@@ -60,11 +61,16 @@ export class Player {
   private stepTimer: number = 0;
   private stepToggle: boolean = false;
 
-  // Physics constants (exact from binary reverse engineering of Vascolet.exe)
+  // Physics & progression constants (exact from binary reverse engineering of Vascolet.exe)
   private readonly GRAVITY = 1800.0;
   private readonly WALK_SPEED = 250.0;
   private readonly CLIMB_SPEED = 150.0;
-  private readonly MAX_FALL_SPEED = 1000.0;
+  private readonly MAX_FALL_SPEED = 1500.0;
+  private readonly AIR_ACCEL = 1200.0; // 20 px/frame @ 60fps
+  private readonly AIR_ACCEL_VERTICAL = 600.0; // 10 px/frame @ 60fps
+  private readonly MAX_SCORE = 999999;
+  private readonly MAX_LIVES = 99;
+  private readonly MAX_KEYS = 9;
 
   public getJumpVelocity(): number {
     // Exact table from binary Vascolet.exe at 0x0050a7d0:
@@ -97,9 +103,9 @@ export class Player {
 
   public setSuit(suit: PlayerSuit) {
     this.suit = suit;
-    // Physical tile collision body is 62 x 104 across all eras in Vascolet engine (TMX standard)
-    this.width = 62;
-    this.height = 104;
+    // Physical collision body is 50 x 90 across all eras in Vascolet.exe (0x00431074)
+    this.width = 50;
+    this.height = 90;
   }
 
   public resetToCheckpoint() {
@@ -116,16 +122,6 @@ export class Player {
   }
 
   public getBox(): Box {
-    if (this.suit === 'dino') {
-      const bw = 44;
-      const bh = 104;
-      return {
-        x: this.x + (this.width - bw) / 2,
-        y: this.y + (this.height - bh),
-        w: bw,
-        h: bh,
-      };
-    }
     return {
       x: this.x,
       y: this.y,
@@ -143,7 +139,20 @@ export class Player {
     this.die();
   }
 
+  public winLevel() {
+    this.currentPlatform = null;
+    this.state = 'victory';
+    this.vx = 0;
+    this.vy = 0;
+    this.isInvulnerable = true;
+  }
+
   public update(dt: number, input: InputManager, map: TMXMap) {
+    if (this.state === 'victory') {
+      this.updateAnimation(dt);
+      return;
+    }
+
     if (this.state === 'dead') {
       this.deathTimer += dt;
       if (this.deathTimer > 1.8) {
@@ -235,6 +244,18 @@ export class Player {
           this.vy = 0;
         }
 
+        if (this.vy !== 0) {
+          this.stepTimer += dt;
+          if (this.stepTimer >= 0.35) {
+            this.stepTimer = 0;
+            this.stepToggle = !this.stepToggle;
+            const snd = this.stepToggle ? '/assets/audio/fx/stair_1.ogg' : '/assets/audio/fx/stair_2.ogg';
+            audio.playSound(snd, 0.4);
+          }
+        } else {
+          this.stepTimer = 0;
+        }
+
         // 4. Reaching top of ladder while climbing UP: step onto top floor
         if (this.vy < 0 && ladderInfo) {
           const tileW = map.tileWidth;
@@ -268,19 +289,34 @@ export class Player {
     }
 
     if (this.state !== 'climb') {
-      // Horizontal Movement (if not in knockback hurt state)
+      // Horizontal Movement (ground: immediate response; air: inertia/acceleration per Vascolet.exe 0x00430dd0)
       if (this.state !== 'hurt') {
-        if (input.isLeft()) {
-          this.vx = -this.WALK_SPEED;
-          this.facingRight = false;
-          if (this.onGround || this.currentPlatform) this.state = 'walk';
-        } else if (input.isRight()) {
-          this.vx = this.WALK_SPEED;
-          this.facingRight = true;
-          if (this.onGround || this.currentPlatform) this.state = 'walk';
+        const grounded = this.onGround || !!this.currentPlatform;
+        if (grounded) {
+          this.verticalJump = false;
+          if (input.isLeft()) {
+            this.vx = -this.WALK_SPEED;
+            this.facingRight = false;
+            this.state = 'walk';
+          } else if (input.isRight()) {
+            this.vx = this.WALK_SPEED;
+            this.facingRight = true;
+            this.state = 'walk';
+          } else {
+            this.vx = 0;
+            this.state = 'idle';
+          }
         } else {
-          this.vx = 0;
-          if (this.onGround || this.currentPlatform) this.state = 'idle';
+          const airAccel = (this.verticalJump ? this.AIR_ACCEL_VERTICAL : this.AIR_ACCEL) * dt;
+          if (input.isLeft()) {
+            this.vx = Math.max(-this.WALK_SPEED, this.vx - airAccel);
+            this.facingRight = false;
+            this.verticalJump = false;
+          } else if (input.isRight()) {
+            this.vx = Math.min(this.WALK_SPEED, this.vx + airAccel);
+            this.facingRight = true;
+            this.verticalJump = false;
+          }
         }
       }
 
@@ -304,10 +340,11 @@ export class Player {
         this.stepTimer = 0;
       }
 
-      // Jump & Double Jump
+      // Jump & Double Jump (Vascolet.exe Dialog signs never suppress jumping)
       if (input.isJumpJustPressed()) {
         if (this.onGround || this.currentPlatform) {
           // 1st Jump from ground or moving platform
+          this.verticalJump = Math.abs(this.vx) < 1;
           this.currentPlatform = null;
           this.vy = this.getJumpVelocity();
           this.onGround = false;
@@ -363,10 +400,14 @@ export class Player {
     // --- Move X ---
     this.x += this.vx * dt;
 
-    // Clamp horizontal movement to minimum playable X
+    // Clamp horizontal movement to playable world bounds
+    const maxPlayableX = Math.max(this.minPlayableX, map.width * tileW - this.width);
     if (this.x < this.minPlayableX) {
       this.x = this.minPlayableX;
       if (this.vx < 0) this.vx = 0;
+    } else if (this.x > maxPlayableX) {
+      this.x = maxPlayableX;
+      if (this.vx > 0) this.vx = 0;
     }
 
     // Check horizontal tiles
@@ -386,6 +427,15 @@ export class Player {
             // Moving left, hit right edge of tile
             this.x = (tx + 1) * tileW;
             this.vx = 0;
+          } else {
+            // Pushed while vx === 0 (e.g. by moving platform or door)
+            const playerCenterX = this.x + this.width * 0.5;
+            const tileCenterX = (tx + 0.5) * tileW;
+            if (playerCenterX < tileCenterX) {
+              this.x = tx * tileW - this.width;
+            } else {
+              this.x = (tx + 1) * tileW;
+            }
           }
         }
       }
@@ -455,9 +505,9 @@ export class Player {
   }
 
   public setScoreAndLives(score: number, lives: number) {
-    this.score = score;
-    this.lives = lives;
-    this.nextExtraLifeScore = Math.floor(Math.max(0, this.score) / 2000) * 2000 + 2000;
+    this.score = Math.max(0, Math.min(this.MAX_SCORE, score));
+    this.lives = Math.max(0, Math.min(this.MAX_LIVES, lives));
+    this.nextExtraLifeScore = Math.floor(this.score / 2000) * 2000 + 2000;
   }
 
   public getNextExtraLifeScore(): number {
@@ -465,28 +515,31 @@ export class Player {
   }
 
   public addScore(points: number) {
-    this.score += points;
+    this.score = Math.min(this.MAX_SCORE, this.score + Math.max(0, points));
     while (this.score >= this.nextExtraLifeScore) {
-      this.lives++;
+      if (this.lives < this.MAX_LIVES) {
+        this.lives++;
+      }
       this.nextExtraLifeScore += 2000;
       audio.playSound('/assets/audio/fx/extra_life.ogg', 0.9);
     }
   }
 
-  public collectCoin() {
-    this.coins++;
-    this.addScore(100);
+  public collectCoin(points: number = 100) {
+    this.coins += 1;
+    this.addScore(Math.max(0, points));
     audio.playSound('/assets/audio/fx/item.ogg', 0.6);
   }
 
-  public collectLife() {
-    this.lives++;
+  public collectLife(count: number = 1) {
+    const n = Math.max(1, count);
+    this.lives = Math.min(this.MAX_LIVES, this.lives + n);
     audio.playSound('/assets/audio/fx/extra_life.ogg', 0.9);
   }
 
   public collectKey(keyName: string) {
     this.keys.add(keyName);
-    this.keyCounts[keyName] = (this.keyCounts[keyName] || 0) + 1;
+    this.keyCounts[keyName] = Math.min(this.MAX_KEYS, (this.keyCounts[keyName] || 0) + 1);
     audio.playSound('/assets/audio/fx/item.ogg', 0.8);
   }
 

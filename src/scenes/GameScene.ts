@@ -1,4 +1,4 @@
-import { TMXMap, LevelConfig, LEVEL_CONFIGS, GameEra } from '../types';
+import { TMXMap, MapObject, LevelConfig, LEVEL_CONFIGS, GameEra } from '../types';
 import { assets } from '../core/AssetLoader';
 import { audio } from '../core/AudioManager';
 import { Camera } from '../core/Camera';
@@ -13,13 +13,35 @@ import {
   GuillotineEnemy,
   ProjectileEnemy,
   MeteoriteEnemy,
+  JumperEnemy,
   VisualEffect,
 } from '../entities/Enemy';
-import { CollectibleItem, Door, MovingPlatform, SavePoint, SignPost, Jumper } from '../entities/Interactive';
+import { CollectibleItem, Door, MovingPlatform, SavePoint, SignPost } from '../entities/Interactive';
 import { HUD } from '../ui/HUD';
 import { DialogueBox } from '../ui/DialogueBox';
 import { OptionsModal } from '../ui/OptionsModal';
 import { calculateMeteoriteInterval, createMeteoriteSpawn } from '../core/ParityFormulas';
+
+/**
+ * Resolves the canonical player spawn object from TMX objects, preferring
+ * spawns inside the playable area (x >= minPlayableX) and selecting the
+ * leftmost one deterministically when duplicate markers exist (e.g. egypt.tmx).
+ */
+export function resolvePlayerSpawn(
+  objects: MapObject[],
+  minPlayableX: number
+): { x: number; y: number } {
+  const candidates = objects.filter((o) => o.type === 'Vascolet');
+  if (candidates.length === 0) {
+    return { x: Math.max(100, minPlayableX), y: 100 };
+  }
+  const inPlayable = candidates.filter((o) => o.x >= minPlayableX);
+  const pool = inPlayable.length > 0 ? inPlayable : candidates;
+  const chosen = pool.reduce((best, cur) => (cur.x < best.x ? cur : best), pool[0]);
+  const x = chosen.width > 0 ? Math.round(chosen.x + chosen.width * 0.5 - 25) : chosen.x;
+  const y = chosen.height > 0 ? Math.round(chosen.y + chosen.height - 90) : chosen.y;
+  return { x, y };
+}
 
 export class GameScene {
   public levelEra: GameEra = 'prehistory';
@@ -34,11 +56,12 @@ export class GameScene {
   public platforms: MovingPlatform[] = [];
   public savePoints: SavePoint[] = [];
   public signs: SignPost[] = [];
-  public jumpers: Jumper[] = [];
   public projectiles: ProjectileEnemy[] = [];
   public meteorites: MeteoriteEnemy[] = [];
   public effects: VisualEffect[] = [];
 
+  private hudMessageText: string = '';
+  private hudMessageTimer: number = 0;
   private meteoriteSpawnTimer: number = 0;
   private meteoriteNextSpawn: number = 0.8;
   private lastRoomX: number = -1;
@@ -59,6 +82,7 @@ export class GameScene {
   ];
 
   public isCompleted: boolean = false;
+  public levelCompleteTimer: number = 0;
   public isGameOver: boolean = false;
 
   private tilesetImg!: HTMLImageElement;
@@ -86,6 +110,7 @@ export class GameScene {
     this.optionsModal.close();
     this.pauseSelectedIndex = 0;
     this.isCompleted = false;
+    this.levelCompleteTimer = 0;
     this.isGameOver = false;
 
     // Load Map
@@ -133,12 +158,10 @@ export class GameScene {
     // Preserve score & lives from previous level and synchronize next extra life threshold
     this.player.setScoreAndLives(initialScore, initialLives);
 
-    // Settle ground enemies onto their floor tiles immediately
+    // Settle ground enemies onto their floor tiles without advancing patrols
     for (const enemy of this.enemies) {
       if (enemy.collidesFloor) {
-        for (let step = 0; step < 20; step++) {
-          enemy.update(0.05, this.map, this.player);
-        }
+        enemy.settleToFloor(this.map);
       }
     }
 
@@ -156,17 +179,16 @@ export class GameScene {
     this.platforms = [];
     this.savePoints = [];
     this.signs = [];
-    this.jumpers = [];
     this.projectiles = [];
     this.meteorites = [];
     this.effects = [];
+    this.hudMessageText = '';
+    this.hudMessageTimer = 0;
+    this.dialogueBox.hide();
     this.meteoriteSpawnTimer = 0;
     this.meteoriteNextSpawn = 0.3 + Math.random() * 1.2;
     this.lastRoomX = -1;
     this.lastRoomY = -1;
-
-    let playerX = 100;
-    let playerY = 100;
 
     for (const obj of this.map.objects) {
       const type = obj.type;
@@ -178,21 +200,22 @@ export class GameScene {
       const p = obj.properties;
 
       if (type === 'Vascolet') {
-        playerX = x;
-        playerY = y;
+        // Player spawn resolved below via resolvePlayerSpawn
       } else if (type === 'Item') {
         const assetName = p.pAsset || 'COIN';
-        this.items.push(new CollectibleItem(type, assetName, x, y, w, h));
+        const count = parseInt(p.pCount || '1', 10) || 1;
+        this.items.push(new CollectibleItem(type, assetName, x, y, w, h, count));
       } else if (type === 'Door') {
         const assetName = p.pAsset || 'BLUE_DOOR_PREHISTORY';
         const reqItem = p.pRequiredItem || '';
-        this.doors.push(new Door(assetName, reqItem, x, y, w, h));
+        const reqCount = parseInt(p.pRequiredCount || p.pCount || '1', 10) || 1;
+        this.doors.push(new Door(assetName, reqItem, x, y, w, h, reqCount));
       } else if (type === 'SavePoint') {
         this.savePoints.push(new SavePoint(x, y, w, h));
       } else if (type === 'Information') {
         this.signs.push(new SignPost(x, y, w, h, p.pText || ''));
       } else if (type === 'Jumper') {
-        this.jumpers.push(new Jumper(x, y, w, h, p.pAnim || p.pAsset, p.pyVel));
+        this.enemies.push(new JumperEnemy(name, type, x, y, w, h, p));
       } else if (type === 'Platform' || type === 'PlatformInterp' || type === 'PlatformLinear') {
         const xDelta = parseFloat(p.pxDest || '0');
         const yDelta = parseFloat(p.pyDest || '0');
@@ -228,7 +251,8 @@ export class GameScene {
       }
     }
 
-    this.player = new Player(playerX, playerY, this.config.minPlayableX);
+    const spawn = resolvePlayerSpawn(this.map.objects, this.config.minPlayableX);
+    this.player = new Player(spawn.x, spawn.y, this.config.minPlayableX);
 
     // Apply era suit
     if (this.levelEra === 'prehistory') {
@@ -369,6 +393,24 @@ export class GameScene {
       return 'game_over';
     }
 
+    // Freeze gameplay during microwave victory sequence (Vascolet.exe state 11)
+    if (this.levelCompleteTimer > 0) {
+      this.player.update(dt, input, this.map);
+      for (let i = this.effects.length - 1; i >= 0; i--) {
+        const eff = this.effects[i];
+        eff.update(dt);
+        if (!eff.active) {
+          this.effects.splice(i, 1);
+        }
+      }
+      this.levelCompleteTimer -= dt;
+      if (this.levelCompleteTimer <= 0) {
+        this.isCompleted = true;
+        return 'level_completed';
+      }
+      return null;
+    }
+
     // Update Player
     this.player.update(dt, input, this.map);
 
@@ -383,17 +425,24 @@ export class GameScene {
     // Run after platform carrier updates to ensure zero jitter/latency
     this.camera.follow(this.player.x, this.player.y, this.player.width, this.player.height);
 
+    // Reset transient HUD alerts and meteorite zone timer on room transition (0x00420230 / 0x0041fe60)
+    const roomX = this.camera.screenX + 1;
+    const roomY = this.camera.screenY + 1;
+    if (roomX !== this.lastRoomX || roomY !== this.lastRoomY) {
+      this.lastRoomX = roomX;
+      this.lastRoomY = roomY;
+      this.hudMessageText = '';
+      this.hudMessageTimer = 0;
+      this.dialogueBox.hide();
+      this.meteorites = [];
+      this.meteoriteSpawnTimer = 0;
+      this.meteoriteNextSpawn = 0.3 + Math.random() * 1.2;
+    }
+
     // Update Doors
     for (const door of this.doors) {
       if (this.camera.isInCurrentRoom(door.x, door.y, door.width, door.height, 100)) {
         door.update(dt, this.player);
-      }
-    }
-
-    // Update Jumpers
-    for (const jumper of this.jumpers) {
-      if (this.camera.isInCurrentRoom(jumper.x, jumper.y, jumper.width, jumper.height, 100)) {
-        jumper.update(dt, this.player);
       }
     }
 
@@ -405,7 +454,9 @@ export class GameScene {
           dt,
           this.player,
           () => {
-            this.isCompleted = true;
+            audio.stopMusic();
+            this.player.winLevel();
+            this.levelCompleteTimer = 1.0;
           },
           addEffect
         );
@@ -416,28 +467,29 @@ export class GameScene {
       return 'level_completed';
     }
 
-    // Update Savepoints & Signs
-    let activeSignText = '';
+    // Update Savepoints & Signs: both automatically trigger Hud::showMessage(text, 2.0s) on overlap (0x004415e0 / 0x00407470)
     for (const sp of this.savePoints) {
-      sp.update(this.player);
-      if (sp.isPlayerNear(this.player)) {
-        activeSignText = 'Juego Salvado';
+      if (sp.update(this.player)) {
+        this.hudMessageText = 'Juego Salvado';
+        this.hudMessageTimer = 2.0;
       }
     }
-
     for (const sign of this.signs) {
       if (sign.isPlayerNear(this.player)) {
-        if (input.isUp() || (this.dialogueBox.visible && this.dialogueBox.text === sign.text)) {
-          activeSignText = sign.text;
-        } else if (!activeSignText) {
-          activeSignText = 'Pulsa ↑ para leer el cartel';
-        }
+        this.hudMessageText = sign.text;
+        this.hudMessageTimer = 2.0;
         break;
       }
     }
 
-    if (activeSignText) {
-      this.dialogueBox.show(activeSignText);
+    if (this.hudMessageTimer > 0) {
+      this.hudMessageTimer = Math.max(0, this.hudMessageTimer - dt);
+      if (this.hudMessageTimer > 0 && this.hudMessageText) {
+        this.dialogueBox.show(this.hudMessageText);
+      } else {
+        this.hudMessageText = '';
+        this.dialogueBox.hide();
+      }
     } else {
       this.dialogueBox.hide();
     }
@@ -467,16 +519,6 @@ export class GameScene {
     }
 
     // Update Meteorite Hazard Zone (screen-based check using pMeteorite(roomX,roomY) from TMX)
-    const roomX = this.camera.screenX + 1;
-    const roomY = this.camera.screenY + 1;
-    if (roomX !== this.lastRoomX || roomY !== this.lastRoomY) {
-      this.lastRoomX = roomX;
-      this.lastRoomY = roomY;
-      this.meteorites = [];
-      // Scenario constructor (0x0041fe60) initializes meteorite timer to [0.3, 1.5]s on room entry
-      this.meteoriteSpawnTimer = 0;
-      this.meteoriteNextSpawn = 0.3 + Math.random() * 1.2;
-    }
     const isMeteoriteZone =
       this.map.properties[`pMeteorite(${roomX},${roomY})`] === 'true' ||
       this.map.properties['pMeteorites'] === 'true';
@@ -598,14 +640,7 @@ export class GameScene {
       }
     }
 
-    // 4. Render Jumpers
-    for (const jumper of this.jumpers) {
-      if (this.camera.isInCurrentRoom(jumper.x, jumper.y, jumper.width, jumper.height, 100)) {
-        jumper.render(ctx, this.enemyImages);
-      }
-    }
-
-    // 5. Render SavePoints
+    // 4. Render SavePoints
     for (const sp of this.savePoints) {
       if (this.camera.isInCurrentRoom(sp.x, sp.y, sp.width, sp.height, 100)) {
         sp.render(ctx, this.signsImg);

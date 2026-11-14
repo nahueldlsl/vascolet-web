@@ -71,7 +71,7 @@ describe('Enemy Entity Integration Tests', () => {
       tileHeight: 76,
       tilesetName: 'test',
       tilesetImageSource: '',
-      tileProps: new Map([[0, { pHard: 'true' }]]),
+      tileProps: new Map([[0, { pHard: true }]]),
       tiles,
       objects: [],
       properties: {},
