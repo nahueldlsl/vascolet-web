@@ -8,6 +8,7 @@ import { resolvePlayerSpawn } from '../../src/scenes/GameScene';
 import { LevelSelectScene } from '../../src/scenes/LevelSelectScene';
 import { GameStorage, ERA_ORDER } from '../../src/core/Storage';
 import { InputManager } from '../../src/core/Input';
+import { CollisionSystem } from '../../src/core/Collision';
 import { CutsceneScene } from '../../src/scenes/CutsceneScene';
 import { GameEra, LEVEL_CONFIGS, MapObject, TMXMap } from '../../src/types';
 
@@ -139,22 +140,19 @@ describe('Complete Audit & Parity Fixes', () => {
       expect(player.vx).toBeLessThan(250);
     });
 
-    it('allows ArrowUp and Space jumping normally and triggers SignPost only on exact hitbox overlap', () => {
+    it('allows Space-only jumping (ArrowUp does not jump) and triggers SignPost only on exact hitbox overlap', () => {
       const map = makeFlatMap(20, 15, 12);
       const player = new Player(300, 12 * 76 - 90, 0);
       player.setSuit('normal');
       player.onGround = true;
 
-      // ArrowUp/KeyW (jumpJustPressed=true) MUST jump unconditionally (-600 + 1800 * 1/60 = -570)
-      player.update(1 / 60, makeDummyInput({ up: true, jumpJustPressed: true }), map);
-      expect(player.vy).toBeCloseTo(-570, 5);
-      expect(player.state).toBe('jump');
+      // Holding ArrowUp on flat ground MUST NOT trigger jump
+      player.update(1 / 60, makeDummyInput({ up: true, upJustPressed: true }), map);
+      expect(player.state).toBe('idle');
+      expect(player.onGround).toBe(true);
 
-      // Explicit Space/X MUST also jump
-      player.onGround = true;
-      player.vy = 0;
-      player.state = 'idle';
-      player.update(1 / 60, makeDummyInput({ jumpJustPressed: true, jumpActionJustPressed: true }), map);
+      // Explicit Space MUST jump (-600 + 1800 * 1/60 = -570)
+      player.update(1 / 60, makeDummyInput({ jump: true, jumpJustPressed: true, jumpActionJustPressed: true }), map);
       expect(player.vy).toBeCloseTo(-570, 5);
       expect(player.state).toBe('jump');
 
@@ -269,6 +267,43 @@ describe('Complete Audit & Parity Fixes', () => {
       }
       // Over 5.0 seconds with interval in [0.2, 0.4], must fire > 12 times (not just 5s/0.4s=12)
       expect(fired).toBeGreaterThanOrEqual(12);
+    });
+
+    it('CannonEnemy (Thrower) does not damage or block player on body contact; only its projectiles hurt', () => {
+      const thrower = new CannonEnemy('CANNON_PREHISTORY', 'Thrower', 400, 400, 90, 90, {
+        pAnim: 'CANNON_PREHISTORY',
+        pBulletAsset: 'CANNONBALL_PREHISTORY',
+        pMinTime: '1.2',
+        pMaxTime: '1.2',
+        pxVel: '-350',
+        pxOffset: '-10',
+        pyOffset: '-65',
+      });
+      const player = new Player(400, 400, 0);
+      const map = makeFlatMap(20, 15, 12);
+      const spawned: ProjectileEnemy[] = [];
+
+      const initialLives = player.lives;
+      // Direct overlap + falling from above (stomp angle): must neither hurt player nor kill thrower
+      player.vy = 200;
+      thrower.update(0.1, map, player, (b) => spawned.push(b));
+      expect(player.lives).toBe(initialLives);
+      expect(player.state).not.toBe('hurt');
+      expect(player.isInvulnerable).toBe(false);
+      expect(thrower.active).toBe(true);
+
+      // Advance until a projectile spawns, then place player in projectile's path
+      for (let i = 0; i < 20 && spawned.length === 0; i++) {
+        thrower.update(0.1, map, player, (b) => spawned.push(b));
+      }
+      expect(spawned.length).toBeGreaterThan(0);
+
+      const bullet = spawned[0];
+      player.x = bullet.x;
+      player.y = bullet.y;
+      bullet.update(0.016, map, player);
+      expect(player.lives).toBe(initialLives - 1);
+      expect(player.state).toBe('dead');
     });
   });
 
@@ -388,6 +423,165 @@ describe('Complete Audit & Parity Fixes', () => {
       // After debounce expires, clicks advance slides sequentially
       expect(cutscene.handleClick()).toBeNull();
       expect(cutscene.handleClick()).toBe('menu');
+    });
+  });
+
+  describe('7. Space-Only Jump Input & Ladder / pLadderEnd Parity', () => {
+    const origWindow = (globalThis as any).window;
+
+    afterEach(() => {
+      (globalThis as any).window = origWindow;
+    });
+
+    function makeLadderMap(): TMXMap {
+      const width = 10;
+      const height = 12;
+      const tiles = new Uint32Array(width * height);
+      // GIDs (tileId = gid - 1): 1->pHard(0), 2->pLadderEnd(1), 3->pLadder(2)
+      for (let tx = 0; tx < width; tx++) {
+        tiles[9 * width + tx] = 1; // solid bottom floor at row 9
+      }
+      // Upper floor at row 6 with a pLadderEnd gap at column 4
+      tiles[6 * width + 2] = 1;
+      tiles[6 * width + 3] = 1;
+      tiles[6 * width + 4] = 2; // pLadderEnd
+      tiles[6 * width + 5] = 1;
+      tiles[6 * width + 6] = 1;
+      // Ladder shaft at column 4, rows 7..8
+      tiles[7 * width + 4] = 3; // pLadder
+      tiles[8 * width + 4] = 3; // pLadder
+
+      return {
+        width,
+        height,
+        tileWidth: 76,
+        tileHeight: 76,
+        tilesetName: 'test',
+        tilesetImageSource: '',
+        tileProps: new Map([
+          [0, { pHard: true }],
+          [1, { pLadderEnd: true }],
+          [2, { pLadder: true }],
+        ]),
+        tiles,
+        objects: [],
+        properties: {},
+      };
+    }
+
+    it('InputManager binds keyboard jump strictly to Space (ArrowUp/KeyW/KeyX/KeyZ do not jump)', () => {
+      const listeners: Record<string, (e: any) => void> = {};
+      (globalThis as any).window = {
+        addEventListener: (ev: string, fn: (e: any) => void) => {
+          listeners[ev] = fn;
+        },
+      };
+      const input = new InputManager();
+
+      for (const code of ['ArrowUp', 'KeyW', 'KeyX', 'KeyZ']) {
+        listeners.keydown({ code, preventDefault: () => {} });
+        expect(input.isJump()).toBe(false);
+        expect(input.isJumpJustPressed()).toBe(false);
+        expect(input.isJumpActionJustPressed()).toBe(false);
+        listeners.keyup({ code });
+        input.update();
+      }
+
+      listeners.keydown({ code: 'ArrowUp', preventDefault: () => {} });
+      expect(input.isUp()).toBe(true);
+      expect(input.isJump()).toBe(false);
+      listeners.keyup({ code: 'ArrowUp' });
+      input.update();
+
+      listeners.keydown({ code: 'Space', preventDefault: () => {} });
+      expect(input.isJump()).toBe(true);
+      expect(input.isJumpJustPressed()).toBe(true);
+      expect(input.isJumpActionJustPressed()).toBe(true);
+    });
+
+    it('treats pLadderEnd as a one-way platform so player stands firmly on ladder tops', () => {
+      const map = makeLadderMap();
+      expect(CollisionSystem.isPlatform(map, 4, 6)).toBe(true);
+
+      // Player centered on pLadderEnd column 4, right on top of row 6
+      const player = new Player(4 * 76 + 13, 6 * 76 - 90, 0);
+      player.setSuit('normal');
+      player.onGround = true;
+
+      for (let i = 0; i < 15; i++) {
+        player.update(1 / 60, makeDummyInput({ up: i < 5 }), map);
+      }
+
+      expect(player.y).toBe(6 * 76 - 90);
+      expect(player.onGround).toBe(true);
+      expect(player.state).toBe('idle');
+    });
+
+    it('climbs ladder smoothly with ArrowUp held and lands on top without oscillating or jumping', () => {
+      const map = makeLadderMap();
+      // Player at bottom of ladder (row 9 top = 684), centered on column 4
+      const player = new Player(4 * 76 + 13, 9 * 76 - 90, 0);
+      player.setSuit('normal');
+      player.onGround = true;
+
+      // Climb all the way up holding ArrowUp continuously for ~2 seconds
+      for (let i = 0; i < 120; i++) {
+        player.update(1 / 60, makeDummyInput({ up: true }), map);
+      }
+
+      expect(player.y).toBe(6 * 76 - 90);
+      expect(player.vy).toBe(0);
+      expect(player.onGround).toBe(true);
+      expect(player.state).toBe('idle');
+    });
+
+    it('enters ladder from top when pressing ArrowDown on pLadderEnd and reaches bottom floor', () => {
+      const map = makeLadderMap();
+      const player = new Player(4 * 76 + 13, 6 * 76 - 90, 0);
+      player.setSuit('normal');
+      player.onGround = true;
+
+      // Frame 1: pressing Down on pLadderEnd enters climb
+      player.update(1 / 60, makeDummyInput({ down: true }), map);
+      expect(player.state).toBe('climb');
+
+      // Continue holding Down until hitting solid row 9 floor
+      for (let i = 0; i < 120; i++) {
+        player.update(1 / 60, makeDummyInput({ down: true }), map);
+      }
+      // Next frame with Down released exits cleanly to idle at row 9 floor
+      player.update(1 / 60, makeDummyInput(), map);
+
+      expect(player.y).toBe(9 * 76 - 90);
+      expect(player.onGround).toBe(true);
+      expect(player.state).toBe('idle');
+    });
+
+    it('ignores Space while holding Up on ladder, but allows Space jump when Up is released', () => {
+      const map = makeLadderMap();
+      const player = new Player(4 * 76 + 13, 8 * 76 - 90, 0);
+      player.setSuit('normal');
+
+      // Enter climb with ArrowUp
+      player.update(1 / 60, makeDummyInput({ up: true }), map);
+      expect(player.state).toBe('climb');
+
+      // Pressing Space while still holding Up must keep climbing (Vascolet.exe 0x0043142a)
+      player.update(
+        1 / 60,
+        makeDummyInput({ up: true, jump: true, jumpJustPressed: true, jumpActionJustPressed: true }),
+        map
+      );
+      expect(player.state).toBe('climb');
+
+      // Pressing Space when Up is NOT held detaches into a jump
+      player.update(
+        1 / 60,
+        makeDummyInput({ right: true, jump: true, jumpJustPressed: true, jumpActionJustPressed: true }),
+        map
+      );
+      expect(player.state).toBe('jump');
+      expect(player.vy).toBeLessThan(0);
     });
   });
 });

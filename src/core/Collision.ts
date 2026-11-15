@@ -38,7 +38,8 @@ export class CollisionSystem {
 
   public static isPlatform(map: TMXMap, tileX: number, tileY: number): boolean {
     const props = this.getTileProps(map, tileX, tileY);
-    return !!props?.pPlatform && !props.pHard;
+    // In Vascolet.exe (0x00428713), both pLadderEnd (type 3) and pPlatform (type 4) act as one-way floors.
+    return Boolean((props?.pPlatform || props?.pLadderEnd) && !props?.pHard);
   }
 
   public static isHazard(map: TMXMap, tileX: number, tileY: number): boolean {

@@ -92,17 +92,16 @@ export class InputManager {
   }
 
   public isJump(): boolean {
-    return this.keysDown.has('Space') || this.keysDown.has('KeyX') || this.keysDown.has('ArrowUp') || this.keysDown.has('KeyW') || this.virtualButtons.jump;
+    return this.keysDown.has('Space') || this.virtualButtons.jump;
   }
 
   public isJumpActionJustPressed(): boolean {
-    const vJust = this.virtualButtons.jump && !this.prevVirtualButtons.jump;
-    return this.keysJustPressed.has('Space') || this.keysJustPressed.has('KeyX') || this.keysJustPressed.has('KeyZ') || vJust;
+    return this.isJumpJustPressed();
   }
 
   public isJumpJustPressed(): boolean {
     const vJust = this.virtualButtons.jump && !this.prevVirtualButtons.jump;
-    return this.keysJustPressed.has('Space') || this.keysJustPressed.has('KeyX') || this.keysJustPressed.has('ArrowUp') || this.keysJustPressed.has('KeyW') || vJust;
+    return this.keysJustPressed.has('Space') || vJust;
   }
 
   public isActionJustPressed(): boolean {

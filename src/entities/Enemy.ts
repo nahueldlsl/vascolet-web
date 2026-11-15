@@ -914,7 +914,8 @@ export class CannonEnemy extends Enemy {
       }
     }
 
-    this.checkPlayerCollision(player);
+    // In Vascolet.exe, EnemyThrower's collision handler (0x4ecd7c+0x4c -> 0x0043dd00) returns 0:
+    // the thrower body never hurts or blocks the player; only its ProjectileEnemy bullets deal damage.
   }
 }
 

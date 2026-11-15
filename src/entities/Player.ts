@@ -208,10 +208,12 @@ export class Player {
     }
 
     // While in climb state:
+    let exitedLadderToTop = false;
     if (this.state === 'climb') {
       this.currentPlatform = null;
-      // 1. Jump exit (only with explicit jump button Space/KeyX, NOT ArrowUp)
-      if (input.isJumpActionJustPressed()) {
+      const activeLadderInfo = CollisionSystem.getLadderInfo(map, this.getBox());
+      // 1. Jump exit (Space only; ignored while holding Up, matching Vascolet.exe 0x0043142a)
+      if (input.isJumpJustPressed() && !input.isUp()) {
         this.state = 'jump';
         this.vy = this.getJumpVelocity();
         this.jumpCount = 1;
@@ -256,39 +258,41 @@ export class Player {
           this.stepTimer = 0;
         }
 
-        // 4. Reaching top of ladder while climbing UP: step onto top floor
-        if (this.vy < 0 && ladderInfo) {
+        // 4. Reaching top of ladder while climbing UP: step onto top floor without same-frame fall-through
+        if (this.vy < 0 && activeLadderInfo) {
           const tileW = map.tileWidth;
           const tileH = map.tileHeight;
           const centerTileX = Math.floor((this.x + this.width / 2) / tileW);
           const waistTileY = Math.floor((this.y + this.height * 0.5) / tileH);
           const hasLadderAbove = CollisionSystem.isLadder(map, centerTileX, waistTileY);
 
-          if (!hasLadderAbove || ladderInfo.isTopEnd) {
-            const ladderTopY = ladderInfo.topY;
+          if (!hasLadderAbove || activeLadderInfo.isTopEnd) {
+            const ladderTopY = activeLadderInfo.topY;
             if (this.y + this.height <= ladderTopY + 24) {
               this.y = ladderTopY - this.height;
               this.state = 'idle';
+              this.vx = 0;
               this.vy = 0;
               this.onGround = true;
               this.jumpCount = 0;
+              exitedLadderToTop = true;
             }
           }
         }
 
         // 5. If feet touch solid ground and not pressing UP: exit ladder to walk or idle
-        if (this.onGround && !input.isUp()) {
+        if (!exitedLadderToTop && this.onGround && !input.isUp()) {
           this.state = (input.isLeft() || input.isRight()) ? 'walk' : 'idle';
         }
 
         // 6. If no longer overlapping ladder (e.g. moved off horizontally):
-        if (!ladderOverlap && this.state === 'climb') {
+        if (!exitedLadderToTop && !activeLadderInfo && this.state === 'climb') {
           this.state = this.onGround ? (this.vx !== 0 ? 'walk' : 'idle') : 'fall';
         }
       }
     }
 
-    if (this.state !== 'climb') {
+    if (!exitedLadderToTop && this.state !== 'climb') {
       // Horizontal Movement (ground: immediate response; air: inertia/acceleration per Vascolet.exe 0x00430dd0)
       if (this.state !== 'hurt') {
         const grounded = this.onGround || !!this.currentPlatform;
@@ -379,8 +383,10 @@ export class Player {
       }
     }
 
-    // Apply movement with tile collision
-    this.moveAndCollide(dt, map, input);
+    // Apply movement with tile collision (skipped on the exact frame exiting to ladder top)
+    if (!exitedLadderToTop) {
+      this.moveAndCollide(dt, map, input);
+    }
 
     // Hazard collision & abyss fall check
     if (this.y > map.height * map.tileHeight) {
@@ -473,7 +479,12 @@ export class Player {
             this.y = (ty + 1) * tileH;
             this.vy = 0;
           }
-        } else if (isPlatform && this.vy >= 0 && !input.isDown()) {
+        } else if (
+          isPlatform &&
+          this.vy >= 0 &&
+          !input.isDown() &&
+          !(this.state === 'climb' && CollisionSystem.isLadderEnd(map, tx, ty))
+        ) {
           // Check one-way platform (only if previously above it)
           const platformTop = ty * tileH;
           if (oldBottom <= platformTop + 6 && this.y + this.height >= platformTop) {
